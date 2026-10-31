@@ -23,9 +23,11 @@ export default function DashboardPage() {
     coins,
     unpaidFineCount,
     totalOutstanding,
+    dailyHistory,
     monthHistory,
     monthTotals,
     streak,
+    monthlyStreak,
   } = useWorkspace();
   const { data: session } = useSession();
 
@@ -173,7 +175,9 @@ export default function DashboardPage() {
       {/* Full-width Monthly Streak Grid */}
       <section className="neu w-full rounded-[28px] p-5 sm:p-7">
         <GithubStreakHeatmap
-          history={monthHistory}
+          history={dailyHistory}
+          monthHistory={monthHistory}
+          streak={monthlyStreak ?? streak}
           onMonthStats={setMonthStats}
         />
       </section>

@@ -290,14 +290,7 @@ export const STREAK_COLORS = [
   "#ecd59f", // Level 4: 5+ tasks (refined warm PIZ gold)
 ];
 
-function getGithubContributionColor(completed, isFuture) {
-  if (isFuture) {
-    return {
-      bg: "bg-transparent",
-      border: "border-dashed border-white/[0.06]",
-      glow: "opacity-35",
-    };
-  }
+function getGithubContributionColor(completed) {
   if (!completed || completed <= 0) {
     return {
       bg: "bg-[#161a22]",
@@ -308,21 +301,21 @@ function getGithubContributionColor(completed, isFuture) {
   if (completed === 1) {
     return {
       bg: "bg-[#423724]",
-      border: "border-[#dcc79a]/20",
+      border: "border-accent/20",
       glow: "",
     };
   }
   if (completed <= 3) {
     return {
       bg: "bg-[#7c6436]",
-      border: "border-[#dcc79a]/35",
+      border: "border-accent/35",
       glow: "",
     };
   }
   if (completed <= 5) {
     return {
       bg: "bg-[#bfa260]",
-      border: "border-[#dcc79a]/50",
+      border: "border-accent/50",
       glow: "shadow-[0_0_8px_rgba(220,199,154,0.2)]",
     };
   }
@@ -333,153 +326,76 @@ function getGithubContributionColor(completed, isFuture) {
   };
 }
 
-export function GithubStreakHeatmap({ history = [], onMonthStats }) {
-  const [activeHoverDay, setActiveHoverDay] = useState(null);
+export function GithubStreakHeatmap({
+  history = [],
+  monthHistory = [],
+  streak = 0,
+  onMonthStats,
+}) {
+  const weeks = useMemo(() => {
+    const list = history.length > 0 ? history : [];
+    const grouped = [];
+    for (let i = 0; i < list.length; i += 7) {
+      grouped.push(list.slice(i, i + 7));
+    }
+    return grouped;
+  }, [history]);
 
-  const {
-    weeks,
-    monthName,
-    year,
-    monthStreak,
-    totalTasks,
-    activeDaysCount,
-    completionRate,
-  } = useMemo(() => {
-    const list = Array.isArray(history) ? history : [];
+  // Current month metrics
+  const monthData = useMemo(() => {
     const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
     const currentMonthName = today.toLocaleString("en-US", { month: "long" });
-    const todayDateNum = today.getDate();
+    const currentYear = today.getFullYear();
+    const mList = Array.isArray(monthHistory) && monthHistory.length > 0
+      ? monthHistory
+      : history.filter((d) => d && d.date && d.date.startsWith(`${currentYear}-`));
 
-    // Map history entries by date string
-    const historyMap = new Map();
-    list.forEach((item) => {
-      if (item && item.date) {
-        historyMap.set(item.date, item);
-      }
-    });
-
-    // Days in current month
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    // First day of month: 0 = Sun, 1 = Mon ... convert to Mon = 0
-    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-    const leadingBlanks = (firstDayIndex + 6) % 7; // Monday = 0, Sunday = 6
-
-    const flatDays = [];
-    let totalCompleted = 0;
-    let totalPossible = 0;
-    let activeDays = 0;
-
-    // 1. Add leading pad days
-    for (let b = 0; b < leadingBlanks; b++) {
-      flatDays.push({
-        isPad: true,
-        key: `pad-pre-${b}`,
-      });
-    }
-
-    // 2. Add actual month days
-    for (let d = 1; d <= daysInMonth; d++) {
-      const yStr = String(currentYear);
-      const mStr = String(currentMonth + 1).padStart(2, "0");
-      const dStr = String(d).padStart(2, "0");
-      const dateKey = `${yStr}-${mStr}-${dStr}`;
-
-      const record = historyMap.get(dateKey);
-      const completed = record?.completed ?? 0;
-      const missed = record?.missed ?? 0;
-      const earned = record?.earned ?? 0;
-      const isToday = d === todayDateNum;
-      const isFuture = d > todayDateNum;
-
-      if (completed > 0) {
-        totalCompleted += completed;
-        activeDays += 1;
-      }
-      totalPossible += completed + missed;
-
-      flatDays.push({
-        isPad: false,
-        key: dateKey,
-        dayNum: d,
-        date: dateKey,
-        label: `${currentMonthName.slice(0, 3)} ${d}`,
-        fullDate: `${currentMonthName} ${d}, ${currentYear}`,
-        completed,
-        missed,
-        earned,
-        isToday,
-        isFuture,
-      });
-    }
-
-    // 3. Add trailing pad days to complete the last 7-day column
-    const remainder = flatDays.length % 7;
-    if (remainder !== 0) {
-      const trailingBlanks = 7 - remainder;
-      for (let t = 0; t < trailingBlanks; t++) {
-        flatDays.push({
-          isPad: true,
-          key: `pad-post-${t}`,
-        });
-      }
-    }
-
-    // 4. Group into 7-day columns (weeks)
-    const weekCols = [];
-    for (let i = 0; i < flatDays.length; i += 7) {
-      weekCols.push(flatDays.slice(i, i + 7));
-    }
-
-    // 5. Calculate monthly consecutive streak
-    let streakCount = 0;
-    const todayRecord = list.find((d) => d.dayNum === todayDateNum);
-    const todayHasDone = (todayRecord?.completed ?? 0) > 0;
-    let checkDay = todayHasDone ? todayDateNum : todayDateNum - 1;
-
-    while (checkDay >= 1) {
-      const yStr = String(currentYear);
-      const mStr = String(currentMonth + 1).padStart(2, "0");
-      const dStr = String(checkDay).padStart(2, "0");
-      const dateKey = `${yStr}-${mStr}-${dStr}`;
-      const rec = historyMap.get(dateKey);
-      if (rec && rec.completed > 0) {
-        streakCount += 1;
-        checkDay -= 1;
-      } else {
-        break;
-      }
-    }
-
-    const rate = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+    const totalTasks = mList.reduce((sum, day) => sum + (day.completed || 0), 0);
+    const activeDays = mList.filter((day) => (day.completed || 0) > 0).length;
+    const totalPossible = mList.reduce(
+      (sum, day) => sum + (day.completed || 0) + (day.missed || 0),
+      0,
+    );
+    const rate = totalPossible > 0 ? Math.round((totalTasks / totalPossible) * 100) : 0;
 
     return {
-      weeks: weekCols,
       monthName: currentMonthName,
-      year: currentYear,
-      monthStreak: streakCount,
-      totalTasks: totalCompleted,
-      activeDaysCount: activeDays,
-      completionRate: rate,
+      totalTasks,
+      activeDays,
+      rate,
     };
-  }, [history]);
+  }, [monthHistory, history]);
 
   useEffect(() => {
     onMonthStats?.({
-      streak: monthStreak,
-      tasks: totalTasks,
-      monthName,
-      activeDays: activeDaysCount,
+      streak: streak,
+      tasks: monthData.totalTasks,
+      monthName: monthData.monthName,
+      activeDays: monthData.activeDays,
     });
-  }, [monthStreak, totalTasks, monthName, activeDaysCount, onMonthStats]);
+  }, [streak, monthData, onMonthStats]);
+
+  const monthLabels = useMemo(() => {
+    const labels = [];
+    let lastMonth = "";
+    weeks.forEach((week, wIndex) => {
+      const firstDay = week[0];
+      if (firstDay && firstDay.label) {
+        const mName = firstDay.label.split(" ")[0];
+        if (mName && mName !== lastMonth) {
+          labels.push({ weekIndex: wIndex, month: mName });
+          lastMonth = mName;
+        }
+      }
+    });
+    return labels;
+  }, [weeks]);
 
   const weekDayLabels = ["Mon", "", "Wed", "", "Fri", "", "Sun"];
 
   return (
-    <div className="w-full space-y-6">
-      {/* 4 Monthly KPI Stats */}
+    <div className="w-full">
+      {/* Top Streak & Accountability Stats Bar (Strictly Month-Based) */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="neu-inset-soft rounded-2xl p-4">
           <div className="flex items-center justify-between text-faint">
@@ -487,20 +403,20 @@ export function GithubStreakHeatmap({ history = [], onMonthStats }) {
             <Flame className="size-4 text-accent" />
           </div>
           <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
-            {monthStreak} <span className="text-xs font-normal text-muted">days</span>
+            {streak} <span className="text-xs font-normal text-muted">days</span>
           </p>
-          <p className="mt-1 text-[10px] text-faint">Consecutive in {monthName}</p>
+          <p className="mt-1 text-[10px] text-faint">Consecutive in {monthData.monthName}</p>
         </div>
 
         <div className="neu-inset-soft rounded-2xl p-4">
           <div className="flex items-center justify-between text-faint">
-            <span className="text-[9px] uppercase tracking-[0.16em]">Tasks Done</span>
+            <span className="text-[9px] uppercase tracking-[0.16em]">Tasks Finished</span>
             <Check className="size-4 text-success" />
           </div>
           <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
-            {totalTasks} <span className="text-xs font-normal text-muted">tasks</span>
+            {monthData.totalTasks} <span className="text-xs font-normal text-muted">tasks</span>
           </p>
-          <p className="mt-1 text-[10px] text-faint">Finished in {monthName}</p>
+          <p className="mt-1 text-[10px] text-faint">Finished in {monthData.monthName}</p>
         </div>
 
         <div className="neu-inset-soft rounded-2xl p-4">
@@ -509,9 +425,9 @@ export function GithubStreakHeatmap({ history = [], onMonthStats }) {
             <Zap className="size-4 text-accent" />
           </div>
           <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
-            {activeDaysCount} <span className="text-xs font-normal text-muted">days</span>
+            {monthData.activeDays} <span className="text-xs font-normal text-muted">days</span>
           </p>
-          <p className="mt-1 text-[10px] text-faint">Days with completed tasks</p>
+          <p className="mt-1 text-[10px] text-faint">Active days in {monthData.monthName}</p>
         </div>
 
         <div className="neu-inset-soft rounded-2xl p-4">
@@ -520,152 +436,90 @@ export function GithubStreakHeatmap({ history = [], onMonthStats }) {
             <TrendingUp className="size-4 text-accent" />
           </div>
           <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
-            {completionRate}%
+            {monthData.rate}%
           </p>
           <p className="mt-1 text-[10px] text-faint">Monthly completion rate</p>
         </div>
       </div>
 
-      {/* GitHub Calendar Grid Card */}
-      <div className="relative rounded-[24px] border border-white/[0.05] bg-white/[0.015] p-5 sm:p-6 overflow-x-auto">
-        {/* Month Title Header */}
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
-              Contribution Heatmap · {year}
-            </p>
-            <h3 className="font-display text-lg text-ink font-normal mt-0.5">
-              {monthName} <span className="italic text-accent">Activity Matrix</span>
-            </h3>
-          </div>
-          <span className="text-xs text-muted tabular-nums">
-            {weeks.length} weeks tracked
-          </span>
-        </div>
-
-        {/* Matrix Area: Labels on left, week columns */}
-        <div className="flex items-start gap-3 min-w-[340px]">
-          {/* Weekday labels */}
-          <div className="flex flex-col justify-between py-1 text-[10px] text-faint/70 pr-1 select-none">
-            {weekDayLabels.map((lbl, idx) => (
-              <span key={idx} className="h-6 sm:h-7 flex items-center">
-                {lbl}
-              </span>
-            ))}
+      {/* GitHub Calendar Grid (Clean Full-Width Matrix) */}
+      <div className="mt-6 overflow-x-auto pb-2">
+        <div className="min-w-[650px] w-full">
+          {/* Month headers across top */}
+          <div className="flex pl-8 text-[10px] text-faint">
+            {weeks.map((week, wIndex) => {
+              const matched = monthLabels.find((m) => m.weekIndex === wIndex);
+              return (
+                <div key={wIndex} className="flex-1 text-left">
+                  {matched ? (
+                    <span className="font-semibold text-accent/90">{matched.month}</span>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Week columns */}
-          <div className="flex gap-2 sm:gap-2.5">
-            {weeks.map((week, wIdx) => (
-              <div key={wIdx} className="flex flex-col gap-2 sm:gap-2.5">
-                {week.map((day) => {
-                  if (day.isPad) {
+          {/* Grid rows */}
+          <div className="mt-2 flex items-center gap-2">
+            {/* Weekday labels */}
+            <div className="flex flex-col justify-between py-1 text-[9px] text-faint/70 pr-2 select-none h-full">
+              {weekDayLabels.map((lbl, idx) => (
+                <span key={idx} className="h-4 sm:h-5 flex items-center">
+                  {lbl}
+                </span>
+              ))}
+            </div>
+
+            {/* Week columns spanning full width */}
+            <div className="flex flex-1 justify-between gap-1.5 sm:gap-2">
+              {weeks.map((week, wIdx) => (
+                <div key={wIdx} className="flex flex-1 flex-col gap-1.5 sm:gap-2 items-center">
+                  {week.map((day) => {
+                    const style = getGithubContributionColor(day.completed);
+                    const tooltipText = `${day.label || day.date}: ${day.completed || 0} completed${
+                      day.earned ? ` · +${formatCoins(day.earned)} coins` : ""
+                    }`;
+
                     return (
                       <div
-                        key={day.key}
-                        className="size-6 sm:size-7 rounded-[4px] opacity-0 pointer-events-none"
+                        key={day.date}
+                        title={tooltipText}
+                        aria-label={tooltipText}
+                        className={`w-full max-w-[26px] aspect-square rounded-[3.5px] border transition-all duration-150 hover:scale-125 hover:z-10 cursor-pointer ${style.bg} ${style.border} ${style.glow}`}
                       />
                     );
-                  }
-
-                  const style = getGithubContributionColor(day.completed, day.isFuture);
-
-                  return (
-                    <div
-                      key={day.key}
-                      onMouseEnter={() => setActiveHoverDay(day)}
-                      onMouseLeave={() => setActiveHoverDay(null)}
-                      title={`${day.label}: ${day.completed || 0} completed${
-                        day.earned ? ` · +${formatCoins(day.earned)} coins` : ""
-                      }`}
-                      className={`relative size-6 sm:size-7 rounded-[4px] border transition-transform duration-150 hover:scale-110 cursor-pointer select-none ${style.bg} ${style.border} ${style.glow} ${
-                        day.isToday
-                          ? "ring-2 ring-accent ring-offset-2 ring-offset-[#171a20]"
-                          : ""
-                      }`}
-                    >
-                      {/* Day number label inside cell for clarity */}
-                      <span
-                        className={`absolute inset-0 grid place-items-center text-[9px] font-semibold tabular-nums pointer-events-none ${
-                          day.completed >= 5
-                            ? "text-[#17130c]"
-                            : day.completed > 0
-                              ? "text-white/90"
-                              : "text-faint/60"
-                        }`}
-                      >
-                        {day.dayNum}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          {/* Live Hover Info Side Box */}
-          <div className="ml-auto hidden md:flex flex-col justify-center rounded-2xl neu-inset-soft p-4 min-w-[200px]">
-            {activeHoverDay ? (
-              <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-wider text-faint">
-                  {activeHoverDay.fullDate}
-                </p>
-                <p className="text-sm font-semibold text-ink">
-                  {activeHoverDay.completed} task{activeHoverDay.completed === 1 ? "" : "s"} done
-                </p>
-                {activeHoverDay.earned > 0 && (
-                  <p className="text-xs text-accent font-medium">
-                    +{formatCoins(activeHoverDay.earned)} coins earned
-                  </p>
-                )}
-                {activeHoverDay.isToday && (
-                  <span className="inline-block rounded-md bg-accent/20 px-2 py-0.5 text-[9px] font-bold text-accent uppercase tracking-wider">
-                    Today
-                  </span>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-2">
-                <p className="text-xs text-muted">Hover any day</p>
-                <p className="text-[10px] text-faint mt-0.5">Inspect task completion & earnings</p>
-              </div>
-            )}
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-
-        {/* Mobile hover banner */}
-        {activeHoverDay && (
-          <div className="mt-3 md:hidden rounded-xl border border-white/[0.06] bg-[#141820]/95 px-3 py-2 text-xs flex items-center justify-between">
-            <span className="text-ink font-medium">{activeHoverDay.fullDate}</span>
-            <span className="text-accent font-semibold">{activeHoverDay.completed} tasks</span>
-          </div>
-        )}
       </div>
 
-      {/* Website-Themed Legend & Readout */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.05] pt-3 text-[10px] text-faint">
-        <span>{totalTasks} total contributions in {monthName}</span>
+      {/* Legend & Summary */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.05] pt-3 text-[10px] text-faint">
+        <span>{monthData.totalTasks} tasks completed in {monthData.monthName}</span>
         <div className="flex items-center gap-1.5">
           <span>Less</span>
           <span
             title="0 tasks"
-            className="size-3.5 rounded-[3px] border border-white/[0.04] bg-[#161a22]"
+            className="size-3 rounded-[2.5px] border border-white/[0.04] bg-[#161a22]"
           />
           <span
             title="1 task"
-            className="size-3.5 rounded-[3px] border border-accent/20 bg-[#423724]"
+            className="size-3 rounded-[2.5px] border border-accent/20 bg-[#423724]"
           />
           <span
             title="2-3 tasks"
-            className="size-3.5 rounded-[3px] border border-accent/35 bg-[#7c6436]"
+            className="size-3 rounded-[2.5px] border border-accent/35 bg-[#7c6436]"
           />
           <span
             title="4-5 tasks"
-            className="size-3.5 rounded-[3px] border border-accent/50 bg-[#bfa260]"
+            className="size-3 rounded-[2.5px] border border-accent/50 bg-[#bfa260]"
           />
           <span
-            title="6+ tasks"
-            className="size-3.5 rounded-[3px] border border-white/40 bg-[#ecd59f]"
+            title="5+ tasks"
+            className="size-3 rounded-[2.5px] border border-white/40 bg-[#ecd59f]"
           />
           <span>More</span>
         </div>
