@@ -322,109 +322,181 @@ function getGithubContributionColor(completed) {
 }
 
 export function GithubStreakHeatmap({
-  history = [],
   monthHistory = [],
+  history = [],
   streak = 0,
   onMonthStats,
 }) {
-  const weeks = useMemo(() => {
-    const list = history.length > 0 ? history : [];
-    const grouped = [];
-    for (let i = 0; i < list.length; i += 7) {
-      grouped.push(list.slice(i, i + 7));
-    }
-    return grouped;
-  }, [history]);
-
-  // Current month metrics
-  const monthData = useMemo(() => {
+  const {
+    weeks,
+    monthName,
+    year,
+    daysInMonth,
+    totalTasks,
+    activeDays,
+  } = useMemo(() => {
     const today = new Date();
-    const currentMonthName = today.toLocaleString("en-US", { month: "long" });
     const currentYear = today.getFullYear();
-    const mList = Array.isArray(monthHistory) && monthHistory.length > 0
-      ? monthHistory
-      : history.filter((d) => d && d.date && d.date.startsWith(`${currentYear}-`));
+    const currentMonth = today.getMonth();
+    const currentMonthName = today.toLocaleString("en-US", { month: "long" });
 
-    const totalTasks = mList.reduce((sum, day) => sum + (day.completed || 0), 0);
-    const activeDays = mList.filter((day) => (day.completed || 0) > 0).length;
-    const totalPossible = mList.reduce(
-      (sum, day) => sum + (day.completed || 0) + (day.missed || 0),
-      0,
-    );
-    const rate = totalPossible > 0 ? Math.round((totalTasks / totalPossible) * 100) : 0;
+    // Exact days in current month (e.g. 30 for November)
+    const numDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    // Map month data by date string
+    const historyMap = new Map();
+    const sourceList =
+      Array.isArray(monthHistory) && monthHistory.length > 0
+        ? monthHistory
+        : history;
+
+    sourceList.forEach((item) => {
+      if (item && item.date) {
+        historyMap.set(item.date, item);
+      }
+    });
+
+    // Day of week of the 1st of the month: 0=Sun, 1=Mon, ..., 6=Sat
+    // Convert to Monday=0 ... Sunday=6:
+    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+    const leadingBlanks = (firstDayIndex + 6) % 7; // Monday = 0, Sunday = 6
+
+    const flatDays = [];
+    let completedCount = 0;
+    let activeDaysCount = 0;
+
+    // 1. Invisible padding slots before day 1 of the month
+    for (let b = 0; b < leadingBlanks; b++) {
+      flatDays.push({
+        isPad: true,
+        key: `pad-pre-${b}`,
+      });
+    }
+
+    // 2. Exactly the days of the current month (Day 1 through Day numDays)
+    for (let d = 1; d <= numDays; d++) {
+      const yStr = String(currentYear);
+      const mStr = String(currentMonth + 1).padStart(2, "0");
+      const dStr = String(d).padStart(2, "0");
+      const dateKey = `${yStr}-${mStr}-${dStr}`;
+
+      const rec = historyMap.get(dateKey);
+      const completed = rec?.completed ?? 0;
+      const earned = rec?.earned ?? 0;
+
+      if (completed > 0) {
+        completedCount += completed;
+        activeDaysCount += 1;
+      }
+
+      flatDays.push({
+        isPad: false,
+        key: dateKey,
+        dayNum: d,
+        date: dateKey,
+        label: `${currentMonthName.slice(0, 3)} ${d}`,
+        fullDate: `${currentMonthName} ${d}, ${currentYear}`,
+        completed,
+        earned,
+      });
+    }
+
+    // 3. Invisible padding slots to complete the final 7-day column
+    const remainder = flatDays.length % 7;
+    if (remainder !== 0) {
+      const trailingBlanks = 7 - remainder;
+      for (let t = 0; t < trailingBlanks; t++) {
+        flatDays.push({
+          isPad: true,
+          key: `pad-post-${t}`,
+        });
+      }
+    }
+
+    // 4. Group into week columns of 7 rows (Mon..Sun)
+    const weekCols = [];
+    for (let i = 0; i < flatDays.length; i += 7) {
+      weekCols.push(flatDays.slice(i, i + 7));
+    }
 
     return {
+      weeks: weekCols,
       monthName: currentMonthName,
-      totalTasks,
-      activeDays,
-      rate,
+      year: currentYear,
+      daysInMonth: numDays,
+      totalTasks: completedCount,
+      activeDays: activeDaysCount,
     };
   }, [monthHistory, history]);
 
   useEffect(() => {
     onMonthStats?.({
-      streak: streak,
-      tasks: monthData.totalTasks,
-      monthName: monthData.monthName,
-      activeDays: monthData.activeDays,
+      streak,
+      tasks: totalTasks,
+      monthName,
+      activeDays,
     });
-  }, [streak, monthData, onMonthStats]);
-
-  const monthLabels = useMemo(() => {
-    const labels = [];
-    let lastMonth = "";
-    weeks.forEach((week, wIndex) => {
-      const firstDay = week[0];
-      if (firstDay && firstDay.label) {
-        const mName = firstDay.label.split(" ")[0];
-        if (mName && mName !== lastMonth) {
-          labels.push({ weekIndex: wIndex, month: mName });
-          lastMonth = mName;
-        }
-      }
-    });
-    return labels;
-  }, [weeks]);
+  }, [streak, totalTasks, monthName, activeDays, onMonthStats]);
 
   const weekDayLabels = ["Mon", "", "Wed", "", "Fri", "", "Sun"];
 
   return (
     <div className="w-full">
-      {/* GitHub Calendar Grid (Clean Full-Width Matrix) */}
+      {/* Month Header Label */}
+      <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent/90">
+        {monthName} {year} · {daysInMonth} Days
+      </div>
+
+      {/* GitHub Calendar Grid (Current Month Only) */}
       <div className="overflow-x-auto pb-1">
-        <div className="min-w-[650px] w-full">
-          {/* Month headers across top */}
-          <div className="flex pl-8 text-[10px] text-faint mb-2">
-            {weeks.map((week, wIndex) => {
-              const matched = monthLabels.find((m) => m.weekIndex === wIndex);
-              return (
-                <div key={wIndex} className="flex-1 text-left">
-                  {matched ? (
-                    <span className="font-semibold text-accent/90">{matched.month}</span>
-                  ) : null}
-                </div>
-              );
-            })}
+        <div className="w-fit min-w-[320px]">
+          {/* Week Headers across top */}
+          <div className="flex items-center gap-2 sm:gap-2.5 mb-1.5 pl-8">
+            {weeks.map((_, wIdx) => (
+              <div
+                key={wIdx}
+                className="w-7 sm:w-8 md:w-9 text-center text-[9px] font-medium text-faint/70"
+              >
+                W{wIdx + 1}
+              </div>
+            ))}
           </div>
 
           {/* Grid rows */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2 sm:gap-2.5">
             {/* Weekday labels */}
-            <div className="flex flex-col justify-between py-1 text-[9px] text-faint/70 pr-2 select-none h-full">
+            <div className="flex flex-col gap-2 sm:gap-2.5 text-[9px] text-faint/70 select-none">
               {weekDayLabels.map((lbl, idx) => (
-                <span key={idx} className="h-4 sm:h-5 flex items-center">
+                <div
+                  key={idx}
+                  className="w-6 h-7 sm:h-8 md:h-9 flex items-center justify-end pr-1"
+                >
                   {lbl}
-                </span>
+                </div>
               ))}
             </div>
 
-            {/* Week columns spanning full width */}
-            <div className="flex flex-1 justify-between gap-1.5 sm:gap-2">
+            {/* Week columns of current month */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
               {weeks.map((week, wIdx) => (
-                <div key={wIdx} className="flex flex-1 flex-col gap-1.5 sm:gap-2 items-center">
+                <div
+                  key={wIdx}
+                  className="flex flex-col gap-2 sm:gap-2.5 items-center"
+                >
                   {week.map((day) => {
+                    if (day.isPad) {
+                      return (
+                        <div
+                          key={day.key}
+                          className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[3.5px] opacity-0 pointer-events-none"
+                        />
+                      );
+                    }
+
                     const style = getGithubContributionColor(day.completed);
-                    const tooltipText = `${day.label || day.date}: ${day.completed || 0} completed${
+                    const tooltipText = `${day.label || day.date}: ${
+                      day.completed || 0
+                    } completed${
                       day.earned ? ` · +${formatCoins(day.earned)} coins` : ""
                     }`;
 
@@ -433,7 +505,7 @@ export function GithubStreakHeatmap({
                         key={day.date}
                         title={tooltipText}
                         aria-label={tooltipText}
-                        className={`w-full max-w-[26px] aspect-square rounded-[3.5px] transition-all duration-150 hover:scale-125 hover:z-10 cursor-pointer ${style.bg} ${style.glow}`}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[3.5px] transition-all duration-150 hover:scale-125 hover:z-10 cursor-pointer ${style.bg} ${style.glow}`}
                       />
                     );
                   })}
@@ -446,7 +518,7 @@ export function GithubStreakHeatmap({
 
       {/* Legend & Summary */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.05] pt-3 text-[10px] text-faint">
-        <span>{monthData.totalTasks} tasks completed in {monthData.monthName}</span>
+        <span>{totalTasks} tasks completed in {monthName}</span>
         <div className="flex items-center gap-1.5">
           <span>Less</span>
           <span
