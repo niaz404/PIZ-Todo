@@ -441,76 +441,78 @@ export function GithubStreakHeatmap({
   const weekDayLabels = ["Mon", "", "Wed", "", "Fri", "", "Sun"];
 
   return (
-    <div className="w-full">
-      {/* Month Header Label */}
-      <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent/90">
-        {monthName} {year} · {daysInMonth} Days
-      </div>
+    <div className="w-full h-full flex flex-col justify-between">
+      <div>
+        {/* Month Header Label */}
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent/90">
+          {monthName} {year} · {daysInMonth} Days
+        </div>
 
-      {/* GitHub Calendar Grid (Current Month Only) */}
-      <div className="overflow-x-auto pb-1">
-        <div className="w-fit min-w-[320px]">
-          {/* Week Headers across top */}
-          <div className="flex items-center gap-2 sm:gap-2.5 mb-1.5 pl-8">
-            {weeks.map((_, wIdx) => (
-              <div
-                key={wIdx}
-                className="w-7 sm:w-8 md:w-9 text-center text-[9px] font-medium text-faint/70"
-              >
-                W{wIdx + 1}
-              </div>
-            ))}
-          </div>
-
-          {/* Grid rows */}
-          <div className="flex items-start gap-2 sm:gap-2.5">
-            {/* Weekday labels */}
-            <div className="flex flex-col gap-2 sm:gap-2.5 text-[9px] text-faint/70 select-none">
-              {weekDayLabels.map((lbl, idx) => (
+        {/* GitHub Calendar Grid (Current Month Only) */}
+        <div className="overflow-x-auto pb-1">
+          <div className="w-fit min-w-[280px]">
+            {/* Week Headers across top */}
+            <div className="flex items-center gap-2 sm:gap-2.5 mb-1.5 pl-8">
+              {weeks.map((_, wIdx) => (
                 <div
-                  key={idx}
-                  className="w-6 h-7 sm:h-8 md:h-9 flex items-center justify-end pr-1"
+                  key={wIdx}
+                  className="w-7 sm:w-8 md:w-9 text-center text-[9px] font-medium text-faint/70"
                 >
-                  {lbl}
+                  W{wIdx + 1}
                 </div>
               ))}
             </div>
 
-            {/* Week columns of current month */}
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              {weeks.map((week, wIdx) => (
-                <div
-                  key={wIdx}
-                  className="flex flex-col gap-2 sm:gap-2.5 items-center"
-                >
-                  {week.map((day) => {
-                    if (day.isPad) {
+            {/* Grid rows */}
+            <div className="flex items-start gap-2 sm:gap-2.5">
+              {/* Weekday labels */}
+              <div className="flex flex-col gap-2 sm:gap-2.5 text-[9px] text-faint/70 select-none">
+                {weekDayLabels.map((lbl, idx) => (
+                  <div
+                    key={idx}
+                    className="w-6 h-7 sm:h-8 md:h-9 flex items-center justify-end pr-1"
+                  >
+                    {lbl}
+                  </div>
+                ))}
+              </div>
+
+              {/* Week columns of current month */}
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                {weeks.map((week, wIdx) => (
+                  <div
+                    key={wIdx}
+                    className="flex flex-col gap-2 sm:gap-2.5 items-center"
+                  >
+                    {week.map((day) => {
+                      if (day.isPad) {
+                        return (
+                          <div
+                            key={day.key}
+                            className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[3.5px] opacity-0 pointer-events-none"
+                          />
+                        );
+                      }
+
+                      const style = getGithubContributionColor(day.completed);
+                      const tooltipText = `${day.label || day.date}: ${
+                        day.completed || 0
+                      } completed${
+                        day.earned ? ` · +${formatCoins(day.earned)} coins` : ""
+                      }`;
+
                       return (
                         <div
-                          key={day.key}
-                          className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[3.5px] opacity-0 pointer-events-none"
+                          key={day.date}
+                          title={tooltipText}
+                          aria-label={tooltipText}
+                          className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[3.5px] transition-all duration-150 hover:scale-125 hover:z-10 cursor-pointer ${style.bg} ${style.glow}`}
                         />
                       );
-                    }
-
-                    const style = getGithubContributionColor(day.completed);
-                    const tooltipText = `${day.label || day.date}: ${
-                      day.completed || 0
-                    } completed${
-                      day.earned ? ` · +${formatCoins(day.earned)} coins` : ""
-                    }`;
-
-                    return (
-                      <div
-                        key={day.date}
-                        title={tooltipText}
-                        aria-label={tooltipText}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[3.5px] transition-all duration-150 hover:scale-125 hover:z-10 cursor-pointer ${style.bg} ${style.glow}`}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

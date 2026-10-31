@@ -123,63 +123,71 @@ export default function DashboardPage() {
         />
       </section>
 
-      {/* Full-width Monthly Coin Flow Graph */}
+      {/* Unified Monthly Streak & Coin Velocity Matrix */}
       <section className="neu w-full rounded-[28px] p-5 sm:p-7">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
-              Monthly coin flow · {monthStats.monthName}
-            </p>
-            <h2 className="mt-1.5 font-display text-2xl font-normal tracking-[-0.015em] text-ink">
-              Earned vs. Burned
-            </h2>
-            <p className="mt-1 text-xs text-muted">
-              Daily coin velocity across completed tasks and incurred fines throughout {monthStats.monthName}.
-            </p>
+        <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 lg:gap-8">
+          {/* Left: GitHub Contribution Heatmap for Current Month */}
+          <div className="w-full lg:w-fit shrink-0">
+            <GithubStreakHeatmap
+              history={dailyHistory}
+              monthHistory={monthHistory}
+              streak={monthlyStreak ?? streak}
+              onMonthStats={setMonthStats}
+            />
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.14em] text-faint">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-accent" />
-              Earned
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-danger" />
-              Fined + Spent
-            </span>
+
+          {/* Desktop Vertical Divider */}
+          <div className="hidden lg:block w-px bg-white/[0.06] self-stretch" />
+
+          {/* Right: Monthly Coin Velocity Graph & Flow Metrics */}
+          <div className="flex-1 min-w-0 flex flex-col justify-between pt-6 lg:pt-0 border-t lg:border-t-0 border-white/[0.06]">
+            {/* Header */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
+                  Monthly coin flow · {monthStats.monthName}
+                </p>
+                <h3 className="mt-1 font-display text-xl font-normal tracking-[-0.015em] text-ink">
+                  Earned vs. Burned
+                </h3>
+              </div>
+              <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.14em] text-faint">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-accent" />
+                  Earned
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-danger" />
+                  Fined + Spent
+                </span>
+              </div>
+            </div>
+
+            {/* Interactive Smooth Curve Flow Chart */}
+            <div className="my-auto w-full py-2">
+              <CoinFlowChart history={monthHistory} height={200} />
+            </div>
+
+            {/* Bottom 3 Monthly Flow Indicators */}
+            <div className="grid grid-cols-3 gap-2.5 border-t border-white/[0.05] pt-3">
+              <FlowStat
+                label="Month earned"
+                value={`+${formatCoins(monthTotals.earned)}`}
+                tone="gold"
+              />
+              <FlowStat
+                label="Month fined"
+                value={`-${formatCoins(monthTotals.fined)}`}
+                tone={monthTotals.fined > 0 ? "danger" : "success"}
+              />
+              <FlowStat
+                label="Net this month"
+                value={formatSignedCoins(netMonth)}
+                tone={netMonth >= 0 ? "success" : "danger"}
+              />
+            </div>
           </div>
         </div>
-
-        <div className="mt-5 w-full">
-          <CoinFlowChart history={monthHistory} height={250} />
-        </div>
-
-        <div className="mt-5 grid grid-cols-3 gap-3 border-t border-white/[0.06] pt-4">
-          <FlowStat
-            label="Month earned"
-            value={`+${formatCoins(monthTotals.earned)}`}
-            tone="gold"
-          />
-          <FlowStat
-            label="Month fined"
-            value={`-${formatCoins(monthTotals.fined)}`}
-            tone={monthTotals.fined > 0 ? "danger" : "success"}
-          />
-          <FlowStat
-            label="Net this month"
-            value={formatSignedCoins(netMonth)}
-            tone={netMonth >= 0 ? "success" : "danger"}
-          />
-        </div>
-      </section>
-
-      {/* Full-width Monthly Streak Grid */}
-      <section className="neu w-full rounded-[28px] p-5 sm:p-7">
-        <GithubStreakHeatmap
-          history={dailyHistory}
-          monthHistory={monthHistory}
-          streak={monthlyStreak ?? streak}
-          onMonthStats={setMonthStats}
-        />
       </section>
     </div>
   );
