@@ -118,7 +118,7 @@ export default function TodoTaskRow({
                 type="button"
                 onClick={saveEditing}
                 aria-label="Save task title"
-                title={`Save title · ${editCost} coins`}
+                title="Save title"
                 className="grid size-7 shrink-0 place-items-center rounded-lg text-success transition-colors hover:bg-white/[0.06]"
               >
                 <Check className="size-3.5" strokeWidth={2.4} />
@@ -163,23 +163,14 @@ export default function TodoTaskRow({
           </div>
         </div>
 
-        <span
-          className={`hidden shrink-0 items-center gap-1 text-[10px] tabular-nums sm:flex ${
-            isDone ? "text-faint" : "text-accent/80"
-          }`}
-        >
-          <Coins className="size-3" />
-          {task.reward}
-        </span>
-
         <div className="flex shrink-0 items-center gap-1">
           {!editing ? (
             <>
               <button
                 type="button"
                 onClick={startEditing}
-                aria-label={`Edit "${task.title}" · ${editCost} coins`}
-                title={`Edit task · ${editCost} coins`}
+                aria-label={`Edit "${task.title}"`}
+                title="Edit task"
                 className="grid size-7 place-items-center rounded-lg text-faint/80 transition-colors duration-200 hover:bg-white/[0.05] hover:text-ink"
               >
                 <Pencil className="size-3.5" />
@@ -190,13 +181,13 @@ export default function TodoTaskRow({
                 onClick={handleDelete}
                 aria-label={
                   confirmingDelete
-                    ? `Confirm delete "${task.title}" · ${deleteCost} coins`
-                    : `Delete "${task.title}" · ${deleteCost} coins`
+                    ? `Confirm delete "${task.title}"`
+                    : `Delete "${task.title}"`
                 }
                 title={
                   confirmingDelete
-                    ? `Confirm delete · ${deleteCost} coins`
-                    : `Delete task · ${deleteCost} coins`
+                    ? "Confirm delete"
+                    : "Delete task"
                 }
                 className={`grid size-7 place-items-center rounded-lg transition-colors duration-200 ${
                   confirmingDelete

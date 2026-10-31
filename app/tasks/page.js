@@ -151,52 +151,9 @@ export default function TodoPage() {
       <h1 className="sr-only">Todo</h1>
 
       <div className="animate-page">
-        {isLocked ? (
-          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-danger/20 bg-danger/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-danger/10 text-danger">
-                <Lock className="size-4" />
-              </span>
-              <div>
-                <p className="text-[12px] font-medium text-ink">
-                  New todos are timed out.
-                </p>
-                <p className="mt-1 text-[11px] leading-relaxed text-muted">
-                  {unpaidFineCount}/{maxUnpaidFines} unpaid fines ·{" "}
-                  {totalOutstanding} coins outstanding. Clear them in the store
-                  or finish the overdue tasks to unlock.
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/store"
-              className="neu-accent inline-flex shrink-0 items-center justify-center rounded-xl px-3.5 py-2 text-[10px] font-semibold"
-            >
-              Open fine desk
-            </Link>
-          </div>
-        ) : unpaidFineCount > 0 ? (
-          <div className="mb-4 flex items-center gap-2.5 rounded-2xl border border-warning/15 bg-warning/[0.05] px-4 py-3 text-[11px] text-muted">
-            <AlertTriangle className="size-3.5 shrink-0 text-warning" />
-            <span>
-              {unpaidFineCount} unpaid fine
-              {unpaidFineCount === 1 ? "" : "s"} · {totalOutstanding} coins.
-              Clear them before the next settlement.
-            </span>
-            <Link
-              href="/store"
-              className="ml-auto shrink-0 text-[10px] font-medium text-accent hover:text-accent-strong"
-            >
-              Pay
-            </Link>
-          </div>
-        ) : null}
-
         <form
           onSubmit={handleAdd}
-          className={`neu rounded-[24px] p-2.5 sm:p-3 ${
-            isLocked ? "opacity-70" : ""
-          }`}
+          className="neu rounded-[24px] p-2.5 sm:p-3"
         >
           <div className="flex items-center gap-2.5 sm:gap-3">
             <div className="neu-inset relative min-w-0 flex-1 rounded-xl px-3 py-2">
@@ -218,7 +175,6 @@ export default function TodoPage() {
                 ref={addInputRef}
                 id="new-task"
                 value={draft}
-                disabled={isLocked}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Escape") {
@@ -227,14 +183,10 @@ export default function TodoPage() {
                     event.currentTarget.blur();
                   }
                 }}
-                placeholder={
-                  isLocked
-                    ? "Clear unpaid fines to add a new todo"
-                    : "What needs doing today?"
-                }
+                placeholder="What needs doing today?"
                 aria-label="New task for today"
                 aria-keyshortcuts="/"
-                className="peer mt-0.5 w-full bg-transparent text-sm text-ink outline-none placeholder:text-faint disabled:cursor-not-allowed"
+                className="peer mt-0.5 w-full bg-transparent text-sm text-ink outline-none placeholder:text-faint"
               />
               <span
                 aria-hidden="true"
@@ -244,28 +196,13 @@ export default function TodoPage() {
 
             <button
               type="submit"
-              disabled={!draft.trim() || isLocked}
+              disabled={!draft.trim()}
               className="neu-accent shrink-0 rounded-xl px-4 py-2.5 text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLocked ? "Locked" : "Add task"}
+              Add task
             </button>
           </div>
         </form>
-
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1 text-[9px] uppercase tracking-[0.14em] text-faint/80">
-          <span className="inline-flex items-center gap-1 text-accent/80">
-            <Coins className="size-3" />
-            {ECONOMY.coinPerTk} coin = 1 tk
-          </span>
-          <span className="size-0.5 rounded-full bg-faint/40" />
-          <span>Missed {ECONOMY.finePerMissedTask}</span>
-          <span className="size-0.5 rounded-full bg-faint/40" />
-          <span>Edit {ECONOMY.taskEditCost}</span>
-          <span className="size-0.5 rounded-full bg-faint/40" />
-          <span>Delete open {ECONOMY.deleteOpenTaskCost}</span>
-          <span className="size-0.5 rounded-full bg-faint/40" />
-          <span>Delete done {ECONOMY.deleteDoneTaskCost}</span>
-        </div>
 
         <div className="mt-4 space-y-4">
           {sections.map(({ day, openTasks, doneTasks }) => {

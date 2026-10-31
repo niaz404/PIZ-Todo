@@ -376,48 +376,12 @@ export default function Providers({ children }) {
     };
   }, []);
 
-  // Settle any past day that has not been closed yet. This runs after a
-  // midnight rollover, and it also recovers a missed settlement after reload.
+  // Settle any past day that has not been closed yet.
+  // Coin fine settlement is paused while coin gateway is in development.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const todayKey = getDateKey(new Date());
-      const result = buildSettlement({
-        days,
-        todayKey,
-        coins,
-        fines,
-        now: new Date().toISOString(),
-      });
-
-      if (!result) return;
-
-      setDays(result.days);
-      setCoins(result.coins);
-      setFines(result.fines);
-      if (result.transactions.length > 0) {
-        setTransactions((current) =>
-          [...result.transactions, ...current].slice(0, 200),
-        );
-      }
-
-      if (result.createdFines.length > 0) {
-        const unpaid = result.createdFines.filter(
-          (fine) => fine.status === "unpaid",
-        ).length;
-        const paid = result.createdFines.length - unpaid;
-
-        notify(
-          "Daily settlement",
-          `${result.createdFines.length} missed task${
-            result.createdFines.length === 1 ? "" : "s"
-          } · ${paid} paid · ${unpaid} unpaid.`,
-          unpaid > 0 ? "warning" : "success",
-        );
-      }
-    }, 650);
-
-    return () => clearTimeout(timer);
-  }, [days, coins, fines, notify]);
+    // No automatic fine deductions while payment system is disabled
+    return;
+  }, []);
 
   const todayDay = days[0] ?? {
     id: getDateKey(new Date()),
@@ -444,7 +408,8 @@ export default function Providers({ children }) {
     (sum, fine) => sum + (Number(fine.amount) || 0),
     0,
   );
-  const isLocked = unpaidFineCount >= ECONOMY.maxUnpaidFines;
+  // Account lock disabled while coin gateway is in development
+  const isLocked = false;
 
   const dailyHistory = useMemo(
     () =>
@@ -608,8 +573,8 @@ export default function Providers({ children }) {
           : null;
 
       notify(
-        `+${formatCoins(reward)} coins`,
-        `"${found.task.title}" is finished.`,
+        "Task completed",
+        `"${found.task.title}" is finished!`,
         "success",
         undo,
       );
@@ -708,9 +673,8 @@ export default function Providers({ children }) {
 
     notify(
       "Task added",
-      `"${trimmed}" is waiting in today's list. Finish it for ${formatCoins(
-        task.reward,
-      )} coins.`,
+      `"${trimmed}" is waiting in today's list.`,
+      "success",
     );
     return true;
   };

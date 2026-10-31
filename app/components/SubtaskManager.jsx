@@ -112,7 +112,7 @@ export default function SubtaskManager({ task, compact = false }) {
                     type="button"
                     onClick={saveEditing}
                     aria-label="Save subtask"
-                    title={`Save subtask · ${ECONOMY.subtaskEditCost} coins`}
+                    title="Save subtask"
                     className={`grid ${actionSize} shrink-0 place-items-center rounded-md text-success transition-colors hover:bg-white/[0.06]`}
                   >
                     <Check className={iconSize} strokeWidth={2.4} />
@@ -141,8 +141,8 @@ export default function SubtaskManager({ task, compact = false }) {
                   <button
                     type="button"
                     onClick={() => startEditing(subtask)}
-                    aria-label={`Edit subtask "${subtask.title}" · ${ECONOMY.subtaskEditCost} coins`}
-                    title={`Edit subtask · ${ECONOMY.subtaskEditCost} coins`}
+                    aria-label={`Edit subtask "${subtask.title}"`}
+                    title="Edit subtask"
                     className={`grid ${actionSize} shrink-0 place-items-center rounded-md text-faint/70 transition-all duration-200 hover:bg-white/[0.06] hover:text-ink group-hover/sub:text-faint`}
                   >
                     <Pencil className={iconSize} />
@@ -150,8 +150,8 @@ export default function SubtaskManager({ task, compact = false }) {
                   <button
                     type="button"
                     onClick={() => deleteSubtask(task.id, subtask.id)}
-                    aria-label={`Delete subtask "${subtask.title}" · ${ECONOMY.deleteSubtaskCost} coins`}
-                    title={`Delete subtask · ${ECONOMY.deleteSubtaskCost} coins`}
+                    aria-label={`Delete subtask "${subtask.title}"`}
+                    title="Delete subtask"
                     className={`grid ${actionSize} shrink-0 place-items-center rounded-md text-faint/70 transition-all duration-200 hover:bg-white/[0.06] hover:text-danger group-hover/sub:text-faint`}
                   >
                     <Trash2 className={iconSize} />
