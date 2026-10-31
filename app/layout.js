@@ -17,6 +17,15 @@ export const metadata = {
   title: "PIZ-Todo",
   description:
     "A soft, focused todo workspace with daily consistency, coin economy, and accountability.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport = {
