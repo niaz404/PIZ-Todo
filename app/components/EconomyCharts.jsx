@@ -327,6 +327,19 @@ export function GithubStreakHeatmap({
   streak = 0,
   onMonthStats,
 }) {
+  const [currentDate, setCurrentDate] = useState(() => {
+    const sample = monthHistory?.[0]?.date || history?.[0]?.date;
+    if (sample) {
+      const parts = sample.split("-").map(Number);
+      return new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
+    }
+    return new Date(2026, 10, 1);
+  });
+
+  useEffect(() => {
+    setCurrentDate(new Date());
+  }, []);
+
   const {
     weeks,
     monthName,
@@ -335,7 +348,7 @@ export function GithubStreakHeatmap({
     totalTasks,
     activeDays,
   } = useMemo(() => {
-    const today = new Date();
+    const today = currentDate;
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth();
     const currentMonthName = today.toLocaleString("en-US", { month: "long" });
@@ -427,7 +440,7 @@ export function GithubStreakHeatmap({
       totalTasks: completedCount,
       activeDays: activeDaysCount,
     };
-  }, [monthHistory, history]);
+  }, [monthHistory, history, currentDate]);
 
   useEffect(() => {
     onMonthStats?.({

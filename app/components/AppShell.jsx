@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import LoginView from "./LoginView";
 import { useWorkspace } from "./Providers";
-import { useSession } from "@/lib/auth-client";
 
 const pageTitles = {
   "/": "Dashboard",
@@ -26,17 +24,8 @@ const pageWidths = {
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { pendingTasks } = useWorkspace();
-  const { data: session, isPending } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Visitor Guard: Unauthenticated visitors can ONLY view the /community page
-  useEffect(() => {
-    if (!isPending && !session?.user && pathname !== "/community") {
-      router.replace("/community");
-    }
-  }, [isPending, session, pathname, router]);
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -54,20 +43,6 @@ export default function AppShell({ children }) {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [sidebarOpen]);
-
-  // Loading indicator while session resolves
-  if (isPending || (!session?.user && pathname !== "/community")) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-app">
-        <div className="flex flex-col items-center gap-3">
-          <span className="size-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-          <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
-            Loading PIZ-Todo...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen">

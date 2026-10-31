@@ -29,9 +29,7 @@ export default function Sidebar({ pendingTasks, open, onClose }) {
   const { data: session } = useSession();
   const isAuthenticated = Boolean(session?.user);
 
-  const navItems = isAuthenticated
-    ? mockNavItems
-    : mockNavItems.filter((item) => item.href === "/community");
+  const navItems = mockNavItems;
 
   const handleSignIn = () => {
     authClient.signIn.social({
@@ -42,7 +40,7 @@ export default function Sidebar({ pendingTasks, open, onClose }) {
 
   const navigation = (
     <div className="flex h-full flex-col">
-      <Link href={isAuthenticated ? "/" : "/community"} onClick={onClose} className="flex items-center px-1">
+      <Link href="/" onClick={onClose} className="flex items-center px-1">
         <span className="font-display text-2xl font-normal tracking-tight text-ink">
           PIZ-Todo
         </span>
