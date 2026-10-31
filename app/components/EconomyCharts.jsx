@@ -294,34 +294,29 @@ function getGithubContributionColor(completed) {
   if (!completed || completed <= 0) {
     return {
       bg: "bg-[#161a22]",
-      border: "border-white/[0.04]",
       glow: "",
     };
   }
   if (completed === 1) {
     return {
       bg: "bg-[#423724]",
-      border: "border-accent/20",
       glow: "",
     };
   }
   if (completed <= 3) {
     return {
       bg: "bg-[#7c6436]",
-      border: "border-accent/35",
       glow: "",
     };
   }
   if (completed <= 5) {
     return {
       bg: "bg-[#bfa260]",
-      border: "border-accent/50",
       glow: "shadow-[0_0_8px_rgba(220,199,154,0.2)]",
     };
   }
   return {
     bg: "bg-[#ecd59f]",
-    border: "border-white/40",
     glow: "shadow-[0_0_12px_rgba(220,199,154,0.45)]",
   };
 }
@@ -395,58 +390,11 @@ export function GithubStreakHeatmap({
 
   return (
     <div className="w-full">
-      {/* Top Streak & Accountability Stats Bar (Strictly Month-Based) */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="neu-inset-soft rounded-2xl p-4">
-          <div className="flex items-center justify-between text-faint">
-            <span className="text-[9px] uppercase tracking-[0.16em]">Month Streak</span>
-            <Flame className="size-4 text-accent" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
-            {streak} <span className="text-xs font-normal text-muted">days</span>
-          </p>
-          <p className="mt-1 text-[10px] text-faint">Consecutive in {monthData.monthName}</p>
-        </div>
-
-        <div className="neu-inset-soft rounded-2xl p-4">
-          <div className="flex items-center justify-between text-faint">
-            <span className="text-[9px] uppercase tracking-[0.16em]">Tasks Finished</span>
-            <Check className="size-4 text-success" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
-            {monthData.totalTasks} <span className="text-xs font-normal text-muted">tasks</span>
-          </p>
-          <p className="mt-1 text-[10px] text-faint">Finished in {monthData.monthName}</p>
-        </div>
-
-        <div className="neu-inset-soft rounded-2xl p-4">
-          <div className="flex items-center justify-between text-faint">
-            <span className="text-[9px] uppercase tracking-[0.16em]">Active Days</span>
-            <Zap className="size-4 text-accent" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
-            {monthData.activeDays} <span className="text-xs font-normal text-muted">days</span>
-          </p>
-          <p className="mt-1 text-[10px] text-faint">Active days in {monthData.monthName}</p>
-        </div>
-
-        <div className="neu-inset-soft rounded-2xl p-4">
-          <div className="flex items-center justify-between text-faint">
-            <span className="text-[9px] uppercase tracking-[0.16em]">Consistency</span>
-            <TrendingUp className="size-4 text-accent" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
-            {monthData.rate}%
-          </p>
-          <p className="mt-1 text-[10px] text-faint">Monthly completion rate</p>
-        </div>
-      </div>
-
       {/* GitHub Calendar Grid (Clean Full-Width Matrix) */}
-      <div className="mt-6 overflow-x-auto pb-2">
+      <div className="overflow-x-auto pb-1">
         <div className="min-w-[650px] w-full">
           {/* Month headers across top */}
-          <div className="flex pl-8 text-[10px] text-faint">
+          <div className="flex pl-8 text-[10px] text-faint mb-2">
             {weeks.map((week, wIndex) => {
               const matched = monthLabels.find((m) => m.weekIndex === wIndex);
               return (
@@ -460,7 +408,7 @@ export function GithubStreakHeatmap({
           </div>
 
           {/* Grid rows */}
-          <div className="mt-2 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {/* Weekday labels */}
             <div className="flex flex-col justify-between py-1 text-[9px] text-faint/70 pr-2 select-none h-full">
               {weekDayLabels.map((lbl, idx) => (
@@ -485,7 +433,7 @@ export function GithubStreakHeatmap({
                         key={day.date}
                         title={tooltipText}
                         aria-label={tooltipText}
-                        className={`w-full max-w-[26px] aspect-square rounded-[3.5px] border transition-all duration-150 hover:scale-125 hover:z-10 cursor-pointer ${style.bg} ${style.border} ${style.glow}`}
+                        className={`w-full max-w-[26px] aspect-square rounded-[3.5px] transition-all duration-150 hover:scale-125 hover:z-10 cursor-pointer ${style.bg} ${style.glow}`}
                       />
                     );
                   })}
@@ -503,23 +451,23 @@ export function GithubStreakHeatmap({
           <span>Less</span>
           <span
             title="0 tasks"
-            className="size-3 rounded-[2.5px] border border-white/[0.04] bg-[#161a22]"
+            className="size-3 rounded-[2.5px] bg-[#161a22]"
           />
           <span
             title="1 task"
-            className="size-3 rounded-[2.5px] border border-accent/20 bg-[#423724]"
+            className="size-3 rounded-[2.5px] bg-[#423724]"
           />
           <span
             title="2-3 tasks"
-            className="size-3 rounded-[2.5px] border border-accent/35 bg-[#7c6436]"
+            className="size-3 rounded-[2.5px] bg-[#7c6436]"
           />
           <span
             title="4-5 tasks"
-            className="size-3 rounded-[2.5px] border border-accent/50 bg-[#bfa260]"
+            className="size-3 rounded-[2.5px] bg-[#bfa260]"
           />
           <span
             title="5+ tasks"
-            className="size-3 rounded-[2.5px] border border-white/40 bg-[#ecd59f]"
+            className="size-3 rounded-[2.5px] bg-[#ecd59f]"
           />
           <span>More</span>
         </div>
