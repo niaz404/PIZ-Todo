@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { formatCoins } from "../lib/utils";
-import { Check, Flame } from "./icons";
+import { Check, Flame, TrendingUp, Zap } from "./icons";
 
 function makeSmoothPath(points) {
   if (points.length === 0) return "";
@@ -284,42 +284,68 @@ export function CoinFlowChart({ history = [], height = 240, compact = false }) {
 // Website theme palette: Dark surface to refined warm gold
 export const STREAK_COLORS = [
   "#161a22", // Level 0: 0 tasks (dark subtle slate)
-  "#382d1c", // Level 1: 1 task (warm bronze)
-  "#614d25", // Level 2: 2 tasks (medium amber gold)
-  "#8a6f35", // Level 3: 3-4 tasks (rich satin gold)
-  "#dcc79a", // Level 4: 5+ tasks (refined warm PIZ gold)
+  "#423724", // Level 1: 1 task (warm bronze)
+  "#7c6436", // Level 2: 2 tasks (medium amber gold)
+  "#bfa260", // Level 3: 3-4 tasks (rich satin gold)
+  "#ecd59f", // Level 4: 5+ tasks (refined warm PIZ gold)
 ];
 
-function getStreakTier(completed) {
-  if (!completed || completed <= 0) return 0;
-  if (completed === 1) return 1;
-  if (completed === 2) return 2;
-  if (completed <= 4) return 3;
-  return 4;
+function getGithubContributionColor(completed, isFuture) {
+  if (isFuture) {
+    return {
+      bg: "bg-transparent",
+      border: "border-dashed border-white/[0.06]",
+      glow: "opacity-35",
+    };
+  }
+  if (!completed || completed <= 0) {
+    return {
+      bg: "bg-[#161a22]",
+      border: "border-white/[0.04]",
+      glow: "",
+    };
+  }
+  if (completed === 1) {
+    return {
+      bg: "bg-[#423724]",
+      border: "border-[#dcc79a]/20",
+      glow: "",
+    };
+  }
+  if (completed <= 3) {
+    return {
+      bg: "bg-[#7c6436]",
+      border: "border-[#dcc79a]/35",
+      glow: "",
+    };
+  }
+  if (completed <= 5) {
+    return {
+      bg: "bg-[#bfa260]",
+      border: "border-[#dcc79a]/50",
+      glow: "shadow-[0_0_8px_rgba(220,199,154,0.2)]",
+    };
+  }
+  return {
+    bg: "bg-[#ecd59f]",
+    border: "border-white/40",
+    glow: "shadow-[0_0_12px_rgba(220,199,154,0.45)]",
+  };
 }
 
-/**
- * Monthly Streak Calendar Display:
- * Strictly monthly based — displays all days of the current month
- * formatted in a 7-column grid with warm gold theme,
- * active streak counter, and day-by-day consistency details.
- */
 export function GithubStreakHeatmap({ history = [], onMonthStats }) {
   const [activeHoverDay, setActiveHoverDay] = useState(null);
 
-  const [monthData, setMonthData] = useState(() => {
-    return {
-      monthName: "This Month",
-      year: 2026,
-      days: [],
-      leadingBlanks: 0,
-      currentMonthStreak: 0,
-      totalCompletedTasks: 0,
-      activeDaysCount: 0,
-    };
-  });
-
-  useEffect(() => {
+  const {
+    weeks,
+    monthName,
+    year,
+    monthStreak,
+    totalTasks,
+    activeDaysCount,
+    completionRate,
+  } = useMemo(() => {
+    const list = Array.isArray(history) ? history : [];
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth();
@@ -328,7 +354,7 @@ export function GithubStreakHeatmap({ history = [], onMonthStats }) {
 
     // Map history entries by date string
     const historyMap = new Map();
-    (history || []).forEach((item) => {
+    list.forEach((item) => {
       if (item && item.date) {
         historyMap.set(item.date, item);
       }
@@ -337,259 +363,311 @@ export function GithubStreakHeatmap({ history = [], onMonthStats }) {
     // Days in current month
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-    // First day of month (0 = Sun, 1 = Mon ... convert to Mon = 0)
+    // First day of month: 0 = Sun, 1 = Mon ... convert to Mon = 0
     const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
     const leadingBlanks = (firstDayIndex + 6) % 7; // Monday = 0, Sunday = 6
 
-    const days = [];
-    let totalCompletedTasks = 0;
-    let activeDaysCount = 0;
+    const flatDays = [];
+    let totalCompleted = 0;
+    let totalPossible = 0;
+    let activeDays = 0;
 
-    for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+    // 1. Add leading pad days
+    for (let b = 0; b < leadingBlanks; b++) {
+      flatDays.push({
+        isPad: true,
+        key: `pad-pre-${b}`,
+      });
+    }
+
+    // 2. Add actual month days
+    for (let d = 1; d <= daysInMonth; d++) {
       const yStr = String(currentYear);
       const mStr = String(currentMonth + 1).padStart(2, "0");
-      const dStr = String(dayNum).padStart(2, "0");
+      const dStr = String(d).padStart(2, "0");
       const dateKey = `${yStr}-${mStr}-${dStr}`;
 
       const record = historyMap.get(dateKey);
       const completed = record?.completed ?? 0;
       const missed = record?.missed ?? 0;
       const earned = record?.earned ?? 0;
-
-      const isToday = dayNum === todayDateNum;
-      const isFuture = dayNum > todayDateNum;
+      const isToday = d === todayDateNum;
+      const isFuture = d > todayDateNum;
 
       if (completed > 0) {
-        totalCompletedTasks += completed;
-        activeDaysCount += 1;
+        totalCompleted += completed;
+        activeDays += 1;
       }
+      totalPossible += completed + missed;
 
-      days.push({
-        dayNum,
+      flatDays.push({
+        isPad: false,
+        key: dateKey,
+        dayNum: d,
         date: dateKey,
-        label: `${currentMonthName.slice(0, 3)} ${dayNum}`,
-        fullDate: `${currentMonthName} ${dayNum}, ${currentYear}`,
+        label: `${currentMonthName.slice(0, 3)} ${d}`,
+        fullDate: `${currentMonthName} ${d}, ${currentYear}`,
         completed,
         missed,
         earned,
         isToday,
         isFuture,
-        level: getStreakTier(completed),
       });
     }
 
-    // Calculate current month streak: consecutive days from today (or yesterday) backwards
-    let monthStreak = 0;
-    const todayDayObj = days.find((d) => d.isToday);
-    const todayHasDone = (todayDayObj?.completed ?? 0) > 0;
+    // 3. Add trailing pad days to complete the last 7-day column
+    const remainder = flatDays.length % 7;
+    if (remainder !== 0) {
+      const trailingBlanks = 7 - remainder;
+      for (let t = 0; t < trailingBlanks; t++) {
+        flatDays.push({
+          isPad: true,
+          key: `pad-post-${t}`,
+        });
+      }
+    }
+
+    // 4. Group into 7-day columns (weeks)
+    const weekCols = [];
+    for (let i = 0; i < flatDays.length; i += 7) {
+      weekCols.push(flatDays.slice(i, i + 7));
+    }
+
+    // 5. Calculate monthly consecutive streak
+    let streakCount = 0;
+    const todayRecord = list.find((d) => d.dayNum === todayDateNum);
+    const todayHasDone = (todayRecord?.completed ?? 0) > 0;
     let checkDay = todayHasDone ? todayDateNum : todayDateNum - 1;
 
     while (checkDay >= 1) {
-      const dayEntry = days.find((d) => d.dayNum === checkDay);
-      if (dayEntry && dayEntry.completed > 0) {
-        monthStreak += 1;
+      const yStr = String(currentYear);
+      const mStr = String(currentMonth + 1).padStart(2, "0");
+      const dStr = String(checkDay).padStart(2, "0");
+      const dateKey = `${yStr}-${mStr}-${dStr}`;
+      const rec = historyMap.get(dateKey);
+      if (rec && rec.completed > 0) {
+        streakCount += 1;
         checkDay -= 1;
       } else {
         break;
       }
     }
 
-    const payload = {
+    const rate = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+
+    return {
+      weeks: weekCols,
       monthName: currentMonthName,
       year: currentYear,
-      days,
-      leadingBlanks,
-      currentMonthStreak: monthStreak,
-      totalCompletedTasks,
-      activeDaysCount,
+      monthStreak: streakCount,
+      totalTasks: totalCompleted,
+      activeDaysCount: activeDays,
+      completionRate: rate,
     };
+  }, [history]);
 
-    setMonthData(payload);
-
+  useEffect(() => {
     onMonthStats?.({
       streak: monthStreak,
-      tasks: totalCompletedTasks,
-      monthName: currentMonthName,
+      tasks: totalTasks,
+      monthName,
       activeDays: activeDaysCount,
     });
-  }, [history, onMonthStats]);
+  }, [monthStreak, totalTasks, monthName, activeDaysCount, onMonthStats]);
 
-  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekDayLabels = ["Mon", "", "Wed", "", "Fri", "", "Sun"];
 
   return (
-    <div className="w-full space-y-5">
-      {/* Monthly Streak Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
-            Monthly Momentum · {monthData.monthName} {monthData.year}
+    <div className="w-full space-y-6">
+      {/* 4 Monthly KPI Stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="neu-inset-soft rounded-2xl p-4">
+          <div className="flex items-center justify-between text-faint">
+            <span className="text-[9px] uppercase tracking-[0.16em]">Month Streak</span>
+            <Flame className="size-4 text-accent" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
+            {monthStreak} <span className="text-xs font-normal text-muted">days</span>
           </p>
-          <h2 className="mt-1 font-display text-2xl font-normal text-ink">
-            {monthData.monthName} <span className="italic text-accent">Streak Grid.</span>
-          </h2>
-          <p className="mt-1 text-xs text-muted">
-            Track daily task consistency and your consecutive streak throughout this month.
-          </p>
+          <p className="mt-1 text-[10px] text-faint">Consecutive in {monthName}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <span className="neu-soft inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold tabular-nums text-ink">
-            <Flame className="size-3.5 text-accent" />
-            <span className="text-accent">{monthData.currentMonthStreak}d</span> Month Streak
-          </span>
+        <div className="neu-inset-soft rounded-2xl p-4">
+          <div className="flex items-center justify-between text-faint">
+            <span className="text-[9px] uppercase tracking-[0.16em]">Tasks Done</span>
+            <Check className="size-4 text-success" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
+            {totalTasks} <span className="text-xs font-normal text-muted">tasks</span>
+          </p>
+          <p className="mt-1 text-[10px] text-faint">Finished in {monthName}</p>
+        </div>
 
-          <span className="neu-soft inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium tabular-nums text-muted">
-            <Check className="size-3.5 text-accent" />
-            <span className="font-semibold text-ink">{monthData.totalCompletedTasks}</span> Tasks Done
-          </span>
+        <div className="neu-inset-soft rounded-2xl p-4">
+          <div className="flex items-center justify-between text-faint">
+            <span className="text-[9px] uppercase tracking-[0.16em]">Active Days</span>
+            <Zap className="size-4 text-accent" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
+            {activeDaysCount} <span className="text-xs font-normal text-muted">days</span>
+          </p>
+          <p className="mt-1 text-[10px] text-faint">Days with completed tasks</p>
+        </div>
+
+        <div className="neu-inset-soft rounded-2xl p-4">
+          <div className="flex items-center justify-between text-faint">
+            <span className="text-[9px] uppercase tracking-[0.16em]">Consistency</span>
+            <TrendingUp className="size-4 text-accent" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
+            {completionRate}%
+          </p>
+          <p className="mt-1 text-[10px] text-faint">Monthly completion rate</p>
         </div>
       </div>
 
-      {/* Monthly 7-Column Calendar Grid */}
-      <div className="relative rounded-[24px] border border-white/[0.05] bg-white/[0.015] p-4 sm:p-6">
-        {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-2 sm:gap-3 text-center mb-3">
-          {weekdays.map((wd) => (
-            <span
-              key={wd}
-              className="text-[10px] font-semibold uppercase tracking-[0.16em] text-faint"
-            >
-              {wd}
-            </span>
-          ))}
+      {/* GitHub Calendar Grid Card */}
+      <div className="relative rounded-[24px] border border-white/[0.05] bg-white/[0.015] p-5 sm:p-6 overflow-x-auto">
+        {/* Month Title Header */}
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
+              Contribution Heatmap · {year}
+            </p>
+            <h3 className="font-display text-lg text-ink font-normal mt-0.5">
+              {monthName} <span className="italic text-accent">Activity Matrix</span>
+            </h3>
+          </div>
+          <span className="text-xs text-muted tabular-nums">
+            {weeks.length} weeks tracked
+          </span>
         </div>
 
-        {/* Day Tiles */}
-        <div className="grid grid-cols-7 gap-2 sm:gap-3">
-          {/* Pre-month empty padding cells */}
-          {Array.from({ length: monthData.leadingBlanks }).map((_, idx) => (
-            <div
-              key={`blank-${idx}`}
-              className="aspect-square rounded-2xl border border-dashed border-white/[0.03] bg-transparent opacity-20"
-            />
-          ))}
+        {/* Matrix Area: Labels on left, week columns */}
+        <div className="flex items-start gap-3 min-w-[340px]">
+          {/* Weekday labels */}
+          <div className="flex flex-col justify-between py-1 text-[10px] text-faint/70 pr-1 select-none">
+            {weekDayLabels.map((lbl, idx) => (
+              <span key={idx} className="h-6 sm:h-7 flex items-center">
+                {lbl}
+              </span>
+            ))}
+          </div>
 
-          {/* Days of the Month */}
-          {monthData.days.map((day) => {
-            const isLevel0 = day.level === 0;
-            const isLevel1 = day.level === 1;
-            const isLevel2 = day.level === 2;
-            const isLevel3 = day.level === 3;
-            const isLevel4 = day.level === 4;
+          {/* Week columns */}
+          <div className="flex gap-2 sm:gap-2.5">
+            {weeks.map((week, wIdx) => (
+              <div key={wIdx} className="flex flex-col gap-2 sm:gap-2.5">
+                {week.map((day) => {
+                  if (day.isPad) {
+                    return (
+                      <div
+                        key={day.key}
+                        className="size-6 sm:size-7 rounded-[4px] opacity-0 pointer-events-none"
+                      />
+                    );
+                  }
 
-            return (
-              <div
-                key={day.date}
-                onMouseEnter={() => setActiveHoverDay(day)}
-                onMouseLeave={() => setActiveHoverDay(null)}
-                className={`relative aspect-square rounded-2xl p-2 sm:p-2.5 flex flex-col justify-between transition-all duration-200 cursor-pointer select-none ${
-                  day.isToday
-                    ? "ring-2 ring-accent ring-offset-2 ring-offset-[#171a20] shadow-lg"
-                    : ""
-                } ${
-                  day.isFuture
-                    ? "neu-inset-soft border border-dashed border-white/[0.04] opacity-40 hover:opacity-75"
-                    : isLevel4
-                      ? "bg-[#dcc79a] text-[#17130c] shadow-md border border-[#f8ecd0]"
-                      : isLevel3
-                        ? "bg-[#8a6f35] text-white border border-[#dcc79a]/50 shadow-sm"
-                        : isLevel2
-                          ? "bg-[#614d25] text-accent-strong border border-[#8a6f35]/40"
-                          : isLevel1
-                            ? "bg-[#382d1c] text-accent border border-[#614d25]/30"
-                            : "neu-inset-soft border border-white/[0.03] text-faint hover:text-muted"
-                }`}
-              >
-                {/* Day Number */}
-                <div className="flex items-center justify-between w-full">
-                  <span
-                    className={`text-[11px] sm:text-xs font-semibold tabular-nums ${
-                      isLevel4 ? "text-[#17130c]" : day.isToday ? "text-accent" : ""
-                    }`}
-                  >
-                    {day.dayNum}
-                  </span>
+                  const style = getGithubContributionColor(day.completed, day.isFuture);
 
-                  {day.isToday ? (
-                    <span className="size-1.5 rounded-full bg-accent animate-ping" />
-                  ) : null}
-                </div>
-
-                {/* Task Count / Status Indicator */}
-                <div className="flex items-center justify-end w-full">
-                  {day.completed > 0 ? (
-                    <span
-                      className={`inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] font-bold tabular-nums ${
-                        isLevel4 ? "text-[#17130c]" : "text-accent"
+                  return (
+                    <div
+                      key={day.key}
+                      onMouseEnter={() => setActiveHoverDay(day)}
+                      onMouseLeave={() => setActiveHoverDay(null)}
+                      title={`${day.label}: ${day.completed || 0} completed${
+                        day.earned ? ` · +${formatCoins(day.earned)} coins` : ""
+                      }`}
+                      className={`relative size-6 sm:size-7 rounded-[4px] border transition-transform duration-150 hover:scale-110 cursor-pointer select-none ${style.bg} ${style.border} ${style.glow} ${
+                        day.isToday
+                          ? "ring-2 ring-accent ring-offset-2 ring-offset-[#171a20]"
+                          : ""
                       }`}
                     >
-                      <Check className="size-2.5" strokeWidth={3} />
-                      <span>{day.completed}</span>
-                    </span>
-                  ) : day.isToday ? (
-                    <span className="text-[8.5px] uppercase tracking-wider font-semibold text-accent/80">
-                      Today
-                    </span>
-                  ) : null}
-                </div>
+                      {/* Day number label inside cell for clarity */}
+                      <span
+                        className={`absolute inset-0 grid place-items-center text-[9px] font-semibold tabular-nums pointer-events-none ${
+                          day.completed >= 5
+                            ? "text-[#17130c]"
+                            : day.completed > 0
+                              ? "text-white/90"
+                              : "text-faint/60"
+                        }`}
+                      >
+                        {day.dayNum}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Live Hover Info Side Box */}
+          <div className="ml-auto hidden md:flex flex-col justify-center rounded-2xl neu-inset-soft p-4 min-w-[200px]">
+            {activeHoverDay ? (
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-wider text-faint">
+                  {activeHoverDay.fullDate}
+                </p>
+                <p className="text-sm font-semibold text-ink">
+                  {activeHoverDay.completed} task{activeHoverDay.completed === 1 ? "" : "s"} done
+                </p>
+                {activeHoverDay.earned > 0 && (
+                  <p className="text-xs text-accent font-medium">
+                    +{formatCoins(activeHoverDay.earned)} coins earned
+                  </p>
+                )}
+                {activeHoverDay.isToday && (
+                  <span className="inline-block rounded-md bg-accent/20 px-2 py-0.5 text-[9px] font-bold text-accent uppercase tracking-wider">
+                    Today
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-2">
+                <p className="text-xs text-muted">Hover any day</p>
+                <p className="text-[10px] text-faint mt-0.5">Inspect task completion & earnings</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Hover Tooltip Overlay */}
-        {activeHoverDay ? (
-          <div className="mt-4 rounded-xl border border-white/[0.06] bg-[#141820]/95 px-4 py-2.5 flex items-center justify-between text-xs animate-fade-in">
-            <span className="font-medium text-ink">
-              {activeHoverDay.fullDate}
-            </span>
-            <div className="flex items-center gap-3">
-              <span className="text-accent font-semibold">
-                {activeHoverDay.completed} task{activeHoverDay.completed === 1 ? "" : "s"} completed
-              </span>
-              {activeHoverDay.earned > 0 ? (
-                <span className="text-success font-medium">
-                  +{formatCoins(activeHoverDay.earned)} coins
-                </span>
-              ) : null}
-            </div>
+        {/* Mobile hover banner */}
+        {activeHoverDay && (
+          <div className="mt-3 md:hidden rounded-xl border border-white/[0.06] bg-[#141820]/95 px-3 py-2 text-xs flex items-center justify-between">
+            <span className="text-ink font-medium">{activeHoverDay.fullDate}</span>
+            <span className="text-accent font-semibold">{activeHoverDay.completed} tasks</span>
           </div>
-        ) : null}
+        )}
       </div>
 
       {/* Website-Themed Legend & Readout */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-faint pt-1">
-        <span className="flex items-center gap-2">
-          <span className="size-2 rounded-full bg-accent" />
-          <span>
-            {monthData.activeDaysCount} active days in {monthData.monthName} ({monthData.totalCompletedTasks} total tasks)
-          </span>
-        </span>
-
-        {/* Color Tiers Legend */}
-        <div className="flex items-center gap-1.5 self-start sm:self-auto">
-          <span className="text-[10px] uppercase tracking-wider mr-1">Tiers:</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.05] pt-3 text-[10px] text-faint">
+        <span>{totalTasks} total contributions in {monthName}</span>
+        <div className="flex items-center gap-1.5">
+          <span>Less</span>
           <span
             title="0 tasks"
-            className="size-3.5 rounded-md border border-white/[0.04] bg-[#161a22]"
+            className="size-3.5 rounded-[3px] border border-white/[0.04] bg-[#161a22]"
           />
           <span
             title="1 task"
-            className="size-3.5 rounded-md border border-[#614d25]/30 bg-[#382d1c]"
+            className="size-3.5 rounded-[3px] border border-accent/20 bg-[#423724]"
           />
           <span
-            title="2 tasks"
-            className="size-3.5 rounded-md border border-[#8a6f35]/40 bg-[#614d25]"
+            title="2-3 tasks"
+            className="size-3.5 rounded-[3px] border border-accent/35 bg-[#7c6436]"
           />
           <span
-            title="3-4 tasks"
-            className="size-3.5 rounded-md border border-[#dcc79a]/50 bg-[#8a6f35]"
+            title="4-5 tasks"
+            className="size-3.5 rounded-[3px] border border-accent/50 bg-[#bfa260]"
           />
           <span
-            title="5+ tasks"
-            className="size-3.5 rounded-md border border-[#f8ecd0] bg-[#dcc79a]"
+            title="6+ tasks"
+            className="size-3.5 rounded-[3px] border border-white/40 bg-[#ecd59f]"
           />
-          <span className="text-[10px] uppercase tracking-wider ml-1">5+ Tasks</span>
+          <span>More</span>
         </div>
       </div>
     </div>

@@ -7,6 +7,15 @@ import { ECONOMY } from "@/app/lib/economy";
 export async function GET(request) {
   try {
     const user = await getUserFromRequest(request.headers);
+    if (!user) {
+      return NextResponse.json({
+        user: null,
+        tasks: [],
+        fines: [],
+        transactions: [],
+      });
+    }
+
     const db = await getDb();
 
     let userFilter;

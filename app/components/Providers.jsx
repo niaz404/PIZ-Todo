@@ -227,62 +227,53 @@ export default function Providers({ children }) {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // If not logged in, reset workspace state so no user data is exposed to visitors
+    if (!session?.user) {
+      setDays([]);
+      setCoins(0);
+      setTransactions([]);
+      setFines([]);
       try {
-        const stored = window.localStorage.getItem(STORAGE_KEY);
-        if (!stored) return;
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {}
+      return;
+    }
 
+    const userStorageKey = `piz.todo.user.${session.user.id}`;
+
+    // Load user-specific cached state
+    try {
+      const stored = window.localStorage.getItem(userStorageKey);
+      if (stored) {
         const saved = JSON.parse(stored);
-        const validDays =
-          Array.isArray(saved.days) &&
-          saved.days.length > 0 &&
-          saved.days.every(
-            (day) =>
-              day &&
-              typeof day.date === "string" &&
-              Array.isArray(day.tasks),
-          );
-
-        if (!validDays) return;
-
-        setDays(normalizeDays(saved.days));
+        if (Array.isArray(saved.days)) setDays(normalizeDays(saved.days));
         if (Number.isFinite(saved.coins)) setCoins(saved.coins);
-        if (FINISHED_MODES.has(saved.finishedMode)) {
-          setFinishedMode(saved.finishedMode);
-        }
-        if (Array.isArray(saved.transactions)) {
-          setTransactions(saved.transactions.slice(0, 200));
-        }
+        if (FINISHED_MODES.has(saved.finishedMode)) setFinishedMode(saved.finishedMode);
+        if (Array.isArray(saved.transactions)) setTransactions(saved.transactions.slice(0, 200));
         if (Array.isArray(saved.fines)) setFines(saved.fines);
-        if (HISTORY_MODE_IDS.has(saved.historyMode)) {
-          setHistoryMode(saved.historyMode);
-        }
-        if (SOCIAL_FOCUSES.has(saved.socialFocus)) {
-          setSocialFocus(saved.socialFocus);
-        }
-        if (Number.isFinite(saved.streak)) setStreak(saved.streak);
-      } catch {
-        // Ignore malformed or unavailable storage.
       }
-    }, 0);
+    } catch {}
 
-    // Sync with MongoDB backend
+    // Load authentic user-specific tasks strictly from MongoDB backend
     async function loadBackendWorkspace() {
       try {
         const res = await fetch("/api/workspace");
         if (!res.ok) return;
         const data = await res.json();
-        if (data.user) {
-          if (Number.isFinite(data.user.coins)) setCoins(data.user.coins);
-          if (Number.isFinite(data.user.streak)) setStreak(data.user.streak);
-          if (data.user.finishedMode && FINISHED_MODES.has(data.user.finishedMode)) {
-            setFinishedMode(data.user.finishedMode);
-          }
+        if (!data.user) {
+          setDays([]);
+          setCoins(0);
+          return;
         }
-        if (Array.isArray(data.fines) && data.fines.length > 0) {
+
+        if (Number.isFinite(data.user.coins)) setCoins(data.user.coins);
+        if (data.user.finishedMode && FINISHED_MODES.has(data.user.finishedMode)) {
+          setFinishedMode(data.user.finishedMode);
+        }
+        if (Array.isArray(data.fines)) {
           setFines(data.fines);
         }
-        if (Array.isArray(data.transactions) && data.transactions.length > 0) {
+        if (Array.isArray(data.transactions)) {
           setTransactions(data.transactions);
         }
         if (Array.isArray(data.tasks)) {
@@ -317,30 +308,18 @@ export default function Providers({ children }) {
         console.error("Backend workspace load:", err);
       }
     }
+
     loadBackendWorkspace();
+  }, [session?.user]);
 
-    return () => clearTimeout(timer);
-  }, []);
-
+  // Persist strictly to user-scoped local storage
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetch("/api/workspace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "sync-state",
-          payload: { coins, streak, finishedMode },
-        }),
-      }).catch(() => {});
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [coins, streak, finishedMode]);
-
-  useEffect(() => {
+    if (!session?.user?.id) return;
+    const userStorageKey = `piz.todo.user.${session.user.id}`;
     const timer = setTimeout(() => {
       try {
         window.localStorage.setItem(
-          STORAGE_KEY,
+          userStorageKey,
           JSON.stringify({
             days,
             coins,
@@ -349,16 +328,16 @@ export default function Providers({ children }) {
             finishedMode,
             historyMode,
             socialFocus,
-            streak,
           }),
         );
       } catch {
-        // Ignore unavailable storage.
+        // Ignore storage errors
       }
     }, 250);
 
     return () => clearTimeout(timer);
   }, [
+    session?.user?.id,
     days,
     coins,
     transactions,
@@ -366,7 +345,6 @@ export default function Providers({ children }) {
     finishedMode,
     historyMode,
     socialFocus,
-    streak,
   ]);
 
   useEffect(() => {

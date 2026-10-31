@@ -487,33 +487,34 @@ export default function ProfilePage() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto"
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in p-4 sm:p-6"
         >
           <div
             onClick={() => setIsAvatarStudioOpen(false)}
             className="fixed inset-0"
           />
-          <div className="neu relative z-10 w-full max-w-md my-auto max-h-[92vh] overflow-y-auto rounded-[28px] p-5 sm:p-6 shadow-2xl">
-            {/* Modal Close Button */}
-            <button
-              type="button"
-              onClick={() => setIsAvatarStudioOpen(false)}
-              className="neu-button absolute right-4 top-4 grid size-8 place-items-center rounded-xl text-muted hover:text-ink transition-colors"
-            >
-              <X className="size-4" />
-            </button>
+          <div className="flex min-h-full items-center justify-center">
+            <div className="neu relative z-10 w-full max-w-md my-auto rounded-[28px] p-6 sm:p-7 shadow-2xl">
+              {/* Modal Close Button */}
+              <button
+                type="button"
+                onClick={() => setIsAvatarStudioOpen(false)}
+                className="neu-button absolute right-4 top-4 grid size-8 place-items-center rounded-xl text-muted hover:text-ink transition-colors"
+              >
+                <X className="size-4" />
+              </button>
 
-            <div className="text-center pr-6 pl-6 pt-1">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-accent font-medium">
-                Avatar Generator
-              </p>
-              <h2 className="font-display text-xl sm:text-2xl font-normal text-ink mt-0.5">
-                Customize Your Avatar
-              </h2>
-              <p className="text-[11px] text-muted mt-1 max-w-xs mx-auto leading-relaxed">
-                Pick a style and type any seed name to generate a custom profile picture.
-              </p>
-            </div>
+              <div className="text-center pt-2 px-6">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-accent font-medium">
+                  Avatar Generator
+                </p>
+                <h2 className="font-display text-2xl font-normal text-ink mt-1">
+                  Customize Your Avatar
+                </h2>
+                <p className="text-xs text-muted mt-1 max-w-xs mx-auto leading-relaxed">
+                  Pick a style and type any seed name to generate a custom profile picture.
+                </p>
+              </div>
 
             {/* Live Preview Display */}
             <div className="mt-4 flex flex-col items-center justify-center">
@@ -616,7 +617,8 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }

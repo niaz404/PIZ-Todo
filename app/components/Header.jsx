@@ -42,84 +42,86 @@ export default function Header({ title, onMenuClick }) {
         </p>
 
         <div className="ml-auto flex items-center gap-2.5">
-          <Link
-            href="/store"
-            aria-label={`Coin balance: ${formatCoins(coins)} coins — open store`}
-            title="Coin balance — open store"
-            className="neu-soft flex items-center gap-2 rounded-full px-3.5 py-2 text-xs transition-all duration-300 hover:-translate-y-px"
-          >
-            <Coins className="size-3.5 text-accent" />
-            <span
-              key={coins}
-              className="animate-coin-pop font-medium tabular-nums text-ink"
-            >
-              {formatCoins(coins)}
-            </span>
-          </Link>
-
-          {unpaidFineCount > 0 ? (
-            <Link
-              href="/store"
-              aria-label={`${unpaidFineCount} unpaid fine${
-                unpaidFineCount === 1 ? "" : "s"
-              } — open store`}
-              title={`${unpaidFineCount} unpaid fine${
-                unpaidFineCount === 1 ? "" : "s"
-              }${isLocked ? " · account timed out" : ""}`}
-              className={`hidden items-center gap-1.5 rounded-full px-3 py-2 text-[11px] tabular-nums transition-all duration-300 hover:-translate-y-px sm:flex ${
-                isLocked
-                  ? "border border-danger/20 bg-danger/[0.08] text-danger"
-                  : "neu-soft text-warning"
-              }`}
-            >
-              <AlertTriangle className="size-3.5" />
-              {unpaidFineCount}
-            </Link>
-          ) : null}
-
-          {todoActive ? <FinishedModeMenu /> : null}
-
-          {/* Streak Day Badge beside Profile Pic */}
-          <Link
-            href="/"
-            title={`Current Streak: ${streak} day${streak === 1 ? "" : "s"}`}
-            className="neu-soft flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold tabular-nums text-ink transition-all duration-300 hover:-translate-y-px"
-          >
-            <Flame className="size-3.5 text-accent" />
-            <span>{streak}d</span>
-          </Link>
-
-          {/* User Profile Avatar or Sign In button */}
           {user ? (
-            <Link
-              href="/profile"
-              aria-label="Open profile"
-              title={user.name || "Account Profile"}
-              aria-current={profileActive ? "page" : undefined}
-              className={`grid size-9 place-items-center rounded-full text-[10px] font-semibold tracking-wide text-accent transition-all duration-300 overflow-hidden ${
-                profileActive
-                  ? "neu-inset ring-2 ring-accent/35 ring-offset-4 ring-offset-app"
-                  : "neu-soft hover:-translate-y-px hover:text-accent-strong"
-              }`}
-            >
-              {user.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.image}
-                  alt={user.name || "User"}
-                  className="size-full object-cover"
-                />
-              ) : (
-                userInitials
-              )}
-            </Link>
+            <>
+              <Link
+                href="/store"
+                aria-label={`Coin balance: ${formatCoins(coins)} coins — open store`}
+                title="Coin balance — open store"
+                className="neu-soft flex items-center gap-2 rounded-full px-3.5 py-2 text-xs transition-all duration-300 hover:-translate-y-px"
+              >
+                <Coins className="size-3.5 text-accent" />
+                <span
+                  key={coins}
+                  className="animate-coin-pop font-medium tabular-nums text-ink"
+                >
+                  {formatCoins(coins)}
+                </span>
+              </Link>
+
+              {unpaidFineCount > 0 ? (
+                <Link
+                  href="/store"
+                  aria-label={`${unpaidFineCount} unpaid fine${
+                    unpaidFineCount === 1 ? "" : "s"
+                  } — open store`}
+                  title={`${unpaidFineCount} unpaid fine${
+                    unpaidFineCount === 1 ? "" : "s"
+                  }${isLocked ? " · account timed out" : ""}`}
+                  className={`hidden items-center gap-1.5 rounded-full px-3 py-2 text-[11px] tabular-nums transition-all duration-300 hover:-translate-y-px sm:flex ${
+                    isLocked
+                      ? "border border-danger/20 bg-danger/[0.08] text-danger"
+                      : "neu-soft text-warning"
+                  }`}
+                >
+                  <AlertTriangle className="size-3.5" />
+                  {unpaidFineCount}
+                </Link>
+              ) : null}
+
+              {todoActive ? <FinishedModeMenu /> : null}
+
+              {/* Streak Day Badge beside Profile Pic */}
+              <Link
+                href="/"
+                title={`Current Streak: ${streak} day${streak === 1 ? "" : "s"}`}
+                className="neu-soft flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold tabular-nums text-ink transition-all duration-300 hover:-translate-y-px"
+              >
+                <Flame className="size-3.5 text-accent" />
+                <span>{streak}d</span>
+              </Link>
+
+              {/* User Profile Avatar */}
+              <Link
+                href="/profile"
+                aria-label="Open profile"
+                title={user.name || "Account Profile"}
+                aria-current={profileActive ? "page" : undefined}
+                className={`grid size-9 place-items-center rounded-full text-[10px] font-semibold tracking-wide text-accent transition-all duration-300 overflow-hidden ${
+                  profileActive
+                    ? "neu-inset ring-2 ring-accent/35 ring-offset-4 ring-offset-app"
+                    : "neu-soft hover:-translate-y-px hover:text-accent-strong"
+                }`}
+              >
+                {user.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.image}
+                    alt={user.name || "User"}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  userInitials
+                )}
+              </Link>
+            </>
           ) : (
             <button
               type="button"
-              onClick={() => setShowAuthModal ? setShowAuthModal(true) : null}
-              className="neu-accent rounded-full px-3.5 py-1.5 text-xs font-semibold shadow-sm transition-all hover:-translate-y-px"
+              onClick={() => (setShowAuthModal ? setShowAuthModal(true) : null)}
+              className="neu-accent rounded-full px-4 py-2 text-xs font-semibold shadow-sm transition-all hover:-translate-y-px"
             >
-              Sign in
+              Sign in with Google
             </button>
           )}
         </div>

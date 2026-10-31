@@ -67,10 +67,19 @@ export async function PATCH(request) {
       filters.push({ _id: new ObjectId(taskId) });
     }
 
-    const updateFields = { ...patch, updatedAt: new Date().toISOString() };
-    await db.collection("tasks").updateOne({ $or: filters }, { $set: updateFields });
+    const userFilter = {
+      userId: String(user.id),
+      $or: filters,
+    };
 
-    const updatedTask = await db.collection("tasks").findOne({ $or: filters });
+    const updateFields = { ...patch, updatedAt: new Date().toISOString() };
+    const updateResult = await db.collection("tasks").updateOne(userFilter, { $set: updateFields });
+
+    if (updateResult.matchedCount === 0) {
+      return NextResponse.json({ error: "Task not found or access denied" }, { status: 404 });
+    }
+
+    const updatedTask = await db.collection("tasks").findOne(userFilter);
     return NextResponse.json({
       success: true,
       task: updatedTask ? { ...updatedTask, id: updatedTask._id.toString() } : null,
@@ -100,7 +109,15 @@ export async function DELETE(request) {
       filters.push({ _id: new ObjectId(taskId) });
     }
 
-    await db.collection("tasks").deleteOne({ $or: filters });
+    const userFilter = {
+      userId: String(user.id),
+      $or: filters,
+    };
+
+    const deleteResult = await db.collection("tasks").deleteOne(userFilter);
+    if (deleteResult.deletedCount === 0) {
+      return NextResponse.json({ error: "Task not found or access denied" }, { status: 404 });
+    }
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Task deletion error:", err);

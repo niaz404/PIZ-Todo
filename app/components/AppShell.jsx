@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import LoginView from "./LoginView";
@@ -26,9 +26,17 @@ const pageWidths = {
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { pendingTasks } = useWorkspace();
   const { data: session, isPending } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Visitor Guard: Unauthenticated visitors can ONLY view the /community page
+  useEffect(() => {
+    if (!isPending && !session?.user && pathname !== "/community") {
+      router.replace("/community");
+    }
+  }, [isPending, session, pathname, router]);
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -48,7 +56,7 @@ export default function AppShell({ children }) {
   }, [sidebarOpen]);
 
   // Loading indicator while session resolves
-  if (isPending) {
+  if (isPending || (!session?.user && pathname !== "/community")) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-app">
         <div className="flex flex-col items-center gap-3">
