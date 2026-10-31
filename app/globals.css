@@ -1,26 +1,352 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --neu-bg: #171a20;
+  --neu-panel: #1c2027;
+  --neu-panel-2: #23272f;
+  --neu-ink: #f4f0e7;
+  --neu-muted: #b2aba0;
+  --neu-faint: #958f84;
+  --neu-accent: #dcc79a;
+  --neu-accent-strong: #eddbb2;
+  --neu-success: #a7cdb5;
+  --neu-warning: #dcc79a;
+  --neu-danger: #df9898;
+  --neu-line: rgb(255 255 255 / 0.055);
+  --neu-line-strong: rgb(255 255 255 / 0.085);
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-app: var(--neu-bg);
+  --color-panel: var(--neu-panel);
+  --color-panel-2: var(--neu-panel-2);
+  --color-ink: var(--neu-ink);
+  --color-muted: var(--neu-muted);
+  --color-faint: var(--neu-faint);
+  --color-accent: var(--neu-accent);
+  --color-accent-strong: var(--neu-accent-strong);
+  --color-success: var(--neu-success);
+  --color-warning: var(--neu-warning);
+  --color-danger: var(--neu-danger);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background-color: var(--neu-bg);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  background-color: var(--neu-bg);
+  background-image:
+    radial-gradient(
+      1100px 720px at 80% -14%,
+      rgb(220 199 154 / 0.055),
+      transparent 62%
+    ),
+    radial-gradient(
+      900px 640px at 4% 102%,
+      rgb(150 168 196 / 0.035),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #1a1d24 0%, #14171c 100%);
+  background-attachment: fixed;
+  color: var(--neu-ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-display {
+  font-family:
+    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino,
+    "URW Palladio L", Georgia, serif;
+}
+
+::selection {
+  background-color: rgb(220 199 154 / 0.24);
+  color: #f8f3e9;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #3b414c;
+  border: 2px solid var(--neu-bg);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #4b525f;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3b414c transparent;
+}
+
+/* ------------------------------------------------------------------
+   Soft UI surfaces
+   Shadows are layered instead of a single wide blur:
+   1. a contact shadow that grounds the element,
+   2. a short ambient shadow for depth,
+   3. a hairline highlight inside the top edge,
+   4. a 1px border that keeps the silhouette crisp on dark.
+   The outer "light" bloom is intentionally gone — on a dark canvas it
+   reads as fog rather than form.
+   ------------------------------------------------------------------ */
+
+.neu {
+  background:
+    radial-gradient(
+      130% 100% at 0% 0%,
+      rgb(255 255 255 / 0.05),
+      transparent 58%
+    ),
+    linear-gradient(180deg, #21262e 0%, #1b1f26 100%);
+  border: 1px solid rgb(255 255 255 / 0.065);
+  box-shadow:
+    -1px -1px 0 rgb(255 255 255 / 0.03),
+    0 1px 1px rgb(0 0 0 / 0.32),
+    0 2px 4px rgb(0 0 0 / 0.2),
+    0 20px 40px -26px rgb(0 0 0 / 0.95),
+    inset 0 1px 0 rgb(255 255 255 / 0.055);
+}
+
+.neu-deep {
+  background:
+    radial-gradient(
+      120% 90% at 0% 0%,
+      rgb(255 255 255 / 0.06),
+      transparent 55%
+    ),
+    linear-gradient(180deg, #262b35 0%, #1d212a 100%);
+  border: 1px solid rgb(255 255 255 / 0.09);
+  box-shadow:
+    -1px -1px 0 rgb(255 255 255 / 0.035),
+    0 1px 1px rgb(0 0 0 / 0.34),
+    0 3px 6px rgb(0 0 0 / 0.2),
+    0 30px 60px -30px rgb(0 0 0 / 1),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+
+.neu-soft {
+  background: linear-gradient(180deg, #252a32 0%, #1d2128 100%);
+  border: 1px solid rgb(255 255 255 / 0.06);
+  box-shadow:
+    -1px -1px 0 rgb(255 255 255 / 0.025),
+    0 1px 1px rgb(0 0 0 / 0.3),
+    0 8px 18px -14px rgb(0 0 0 / 0.9),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+.neu-inset {
+  background: linear-gradient(180deg, #13161c 0%, #181c23 100%);
+  border: 1px solid rgb(255 255 255 / 0.025);
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 0.55),
+    inset 0 -1px 0 rgb(255 255 255 / 0.08);
+}
+
+.neu-inset-soft {
+  background: linear-gradient(180deg, #161a20 0%, #1b1f27 100%);
+  border: 1px solid rgb(255 255 255 / 0.022);
+  box-shadow:
+    inset 0 2px 3px rgb(0 0 0 / 0.45),
+    inset 0 -1px 0 rgb(255 255 255 / 0.075);
+}
+
+.neu-well {
+  background: #12151a;
+  border: 1px solid rgb(255 255 255 / 0.02);
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 0.65),
+    inset 0 -1px 0 rgb(255 255 255 / 0.06);
+}
+
+.neu-button {
+  background: linear-gradient(180deg, #262b34 0%, #1c2027 100%);
+  border: 1px solid var(--neu-line);
+  box-shadow:
+    0 1px 1px rgb(0 0 0 / 0.35),
+    0 6px 14px -10px rgb(0 0 0 / 0.9),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
+  transition:
+    box-shadow 240ms ease,
+    transform 240ms ease,
+    background 240ms ease,
+    border-color 240ms ease,
+    color 240ms ease;
+}
+
+.neu-button:hover {
+  background: linear-gradient(180deg, #2a303a 0%, #1f242c 100%);
+  border-color: var(--neu-line-strong);
+  box-shadow:
+    0 2px 2px rgb(0 0 0 / 0.32),
+    0 10px 20px -12px rgb(0 0 0 / 0.95),
+    inset 0 1px 0 rgb(255 255 255 / 0.085);
+  transform: translateY(-1px);
+}
+
+.neu-button:active {
+  background: linear-gradient(180deg, #1b1f26 0%, #20252d 100%);
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 0.55),
+    inset 0 -1px 0 rgb(255 255 255 / 0.04);
+  transform: translateY(0);
+}
+
+.neu-accent {
+  background: linear-gradient(180deg, #ecdebd 0%, #cfb986 100%);
+  color: #191307;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  box-shadow:
+    0 1px 1px rgb(0 0 0 / 0.35),
+    0 10px 22px -12px rgb(0 0 0 / 0.85),
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    inset 0 -1px 0 rgb(126 98 48 / 0.25);
+  transition:
+    box-shadow 240ms ease,
+    transform 240ms ease,
+    background 240ms ease;
+}
+
+.neu-accent:hover {
+  background: linear-gradient(180deg, #f2e5c8 0%, #d5c08e 100%);
+  box-shadow:
+    0 2px 2px rgb(0 0 0 / 0.32),
+    0 14px 26px -14px rgb(0 0 0 / 0.9),
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    inset 0 -1px 0 rgb(126 98 48 / 0.22);
+  transform: translateY(-1px);
+}
+
+.neu-accent:active {
+  box-shadow:
+    inset 0 2px 4px rgb(90 66 24 / 0.3),
+    inset 0 -1px 0 rgb(255 255 255 / 0.3);
+  transform: translateY(0);
+}
+
+.neu-hover {
+  transition:
+    box-shadow 240ms ease,
+    transform 240ms ease,
+    border-color 240ms ease;
+}
+
+.neu-hover:hover {
+  border-color: var(--neu-line-strong);
+  box-shadow:
+    -1px -1px 0 rgb(255 255 255 / 0.035),
+    0 2px 2px rgb(0 0 0 / 0.3),
+    0 24px 44px -26px rgb(0 0 0 / 0.95),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
+  transform: translateY(-1px);
+}
+
+.neu-nav {
+  border: 1px solid transparent;
+  transition:
+    box-shadow 240ms ease,
+    background 240ms ease,
+    border-color 240ms ease;
+}
+
+.neu-nav:hover {
+  background: rgb(255 255 255 / 0.035);
+  border-color: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+.neu-nav-active {
+  background: linear-gradient(180deg, #191d24 0%, #1d222a 100%);
+  border-color: rgb(255 255 255 / 0.045);
+  box-shadow:
+    inset 0 1px 3px rgb(0 0 0 / 0.55),
+    inset 0 -1px 0 rgb(255 255 255 / 0.05),
+    inset 0 0 0 1px rgb(220 199 154 / 0.06);
+}
+
+.neu-track {
+  background: #111419;
+  border: 1px solid rgb(0 0 0 / 0.5);
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.7),
+    inset 0 -1px 0 rgb(255 255 255 / 0.03);
+}
+
+.neu-track > span {
+  background: linear-gradient(90deg, #c9b27d 0%, #eeddb6 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.45),
+    0 0 8px rgb(220 199 154 / 0.2);
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes coin-pop {
+  0% {
+    opacity: 0.55;
+    transform: translateY(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-page {
+  animation: page-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-coin-pop {
+  animation: coin-pop 280ms ease-out;
+}
+
+.animate-toast-in {
+  animation: toast-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-page,
+  .animate-coin-pop,
+  .animate-toast-in {
+    animation: none;
+  }
+
+  .neu-button,
+  .neu-accent,
+  .neu-hover,
+  .neu-nav {
+    transition: none;
+  }
 }
