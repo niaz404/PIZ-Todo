@@ -28,3 +28,32 @@ Retain qualifying friction even if it is later fixed or worked around; record th
 Before the final response, run one reporting pass. If candidates remain, from this file's directory run `npx --no-install next internal agent-feedback-instructions` once without piping or truncating its output. Follow its output or error guidance. If a network sandbox blocks it, retry with network access; if it still returns no output, continue normally.
 
 <!-- END:nextjs-agent-feedback -->
+
+## PIZ-Todo Architecture & Economy Guidelines
+
+### 1. Production Deployment & Reliability
+- Always run `npm run build` to verify 0 errors before committing or pushing.
+- Canonical production URL: `https://piz-todo.vercel.app`.
+- Better Auth must keep `verification: { storeInDatabase: true }` in `lib/auth.js` for serverless multi-instance state sync.
+- Route aliases `/task`, `/tasks`, and `/todo` must always route to the primary todo view.
+
+### 2. Protected Secure Coin Economy Rules
+- **Task Completion Reward**: +25 coins on time.
+- **Cheat Prevention**:
+  - Task Edit: -2 coins (requires user confirmation modal).
+  - Task Delete: -5 coins (requires user confirmation modal).
+- **Missed Task Accountability**:
+  - -50 coins fine when cutoff passes without task completion.
+  - Generates unpaid fine; global persistent banner across all pages.
+  - Auto-Pay Fines option in Settings (default: manual).
+- **Store & Wealth Storage (Heart)**:
+  - 1 Heart = 80 coins.
+  - Cancels 1 missed task fine (worth 50 coins).
+  - Permanent wealth store: immune to weekly tax/decay.
+- **Weekly Weekend Wheel (Anti-Hoarding)**:
+  - Every weekend, users spin for 5%, 10%, 15%, or 20% decay on **earned coins only**.
+  - Skipping the weekend spin results in the maximum 20% automatic deduction.
+  - **Purchased coins** with real money are strictly separated and completely exempt from decay.
+- **Streak Multiplier**:
+  - Every 3-day consecutive streak grants a +50 coin milestone bonus.
+
