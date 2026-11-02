@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, CornerDownRight, Pencil, Plus, Trash2, X } from "./icons";
 import { useWorkspace } from "./Providers";
 import { ECONOMY } from "../lib/economy";
