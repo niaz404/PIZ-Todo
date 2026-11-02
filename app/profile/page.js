@@ -6,8 +6,10 @@ import {
   AlertTriangle,
   ArrowRight,
   Check,
+  Clock,
   Coins,
   Flame,
+  Lock,
   LogOut,
   Pencil,
   RotateCcw,
@@ -17,7 +19,11 @@ import {
   X,
 } from "../components/icons";
 import { useWorkspace } from "../components/Providers";
-import { formatCoins } from "../lib/utils";
+import {
+  canChangeDueTime,
+  formatCoins,
+  getNextDueTimeUnlockDate,
+} from "../lib/utils";
 import { authClient, useSession, signOut } from "@/lib/auth-client";
 
 const AVATAR_STYLES = [
@@ -44,6 +50,10 @@ export default function ProfilePage() {
     completedTasks,
     days,
     requireAuth,
+    dueTime,
+    dueHour,
+    dueTimeChangedAt,
+    setIsDueModalOpen,
   } = useWorkspace();
   const { data: session } = useSession();
 
@@ -103,6 +113,9 @@ export default function ProfilePage() {
     .join("")
     .toUpperCase()
     .slice(0, 3);
+
+  const isDueChangeable = canChangeDueTime(dueTimeChangedAt);
+  const nextDueUnlockDate = getNextDueTimeUnlockDate(dueTimeChangedAt);
 
   // Live avatar preview URL
   const previewAvatarUrl = `https://api.dicebear.com/9.x/${selectedStyle}/svg?seed=${encodeURIComponent(
@@ -478,6 +491,75 @@ export default function ProfilePage() {
               {completedTasks.length}
             </p>
             <p className="mt-0.5 text-[10px] text-faint">Lifetime finished</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Day Boundary & Task Due Cutoff Section */}
+      <section className="neu rounded-[28px] p-6 sm:p-7 border border-white/[0.05]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <span className="neu-inset-soft grid size-12 shrink-0 place-items-center rounded-2xl text-accent">
+              <Clock className="size-6" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h3 className="font-display text-xl font-normal text-ink">
+                  Task Cutoff & Day Boundary
+                </h3>
+                {isDueChangeable ? (
+                  <span className="neu-pill px-2.5 py-0.5 text-[10px] font-semibold text-accent border border-accent/20">
+                    Changeable
+                  </span>
+                ) : (
+                  <span className="neu-pill inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-semibold text-warning border border-warning/20">
+                    <Lock className="size-2.5 text-warning" />
+                    Locked until next month
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-muted max-w-xl leading-relaxed">
+                Your current daily tasks become due at{" "}
+                <span className="font-semibold text-accent">{dueTime || "12:00 AM"}</span>,
+                at which point the daily cycle ends and the new day begins.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsDueModalOpen(true)}
+            className="neu-button inline-flex items-center gap-2 self-start sm:self-auto rounded-xl px-4 py-2.5 text-xs font-semibold text-accent hover:text-accent-strong transition-all"
+          >
+            <Clock className="size-3.5" />
+            <span>Change Cutoff Time</span>
+          </button>
+        </div>
+
+        {/* Warning Policy Box */}
+        <div
+          className={`mt-5 rounded-2xl p-4 border text-xs leading-relaxed ${
+            isDueChangeable
+              ? "border-accent/20 bg-accent/[0.03] text-muted"
+              : "border-warning/30 bg-warning/[0.05] text-warning"
+          }`}
+        >
+          <div className="flex items-start gap-2.5">
+            {isDueChangeable ? (
+              <Clock className="size-4 shrink-0 text-accent mt-0.5" />
+            ) : (
+              <Lock className="size-4 shrink-0 text-warning mt-0.5" />
+            )}
+            <div>
+              <p className="font-semibold text-[11px] uppercase tracking-[0.14em] text-ink">
+                {isDueChangeable ? "Strict Monthly Lock Rule" : `Locked Until ${nextDueUnlockDate}`}
+              </p>
+              <p className="mt-0.5 text-[11px]">
+                {isDueChangeable
+                  ? "You can customize your due time to 12 AM/PM, 3 AM/PM, 6 AM/PM, or 9 AM/PM. Once updated, you cannot change it again until next month."
+                  : `You already modified your daily cutoff time for this month. In accordance with accountability policy, you may choose a new cutoff on ${nextDueUnlockDate}.`}
+              </p>
+            </div>
           </div>
         </div>
       </section>

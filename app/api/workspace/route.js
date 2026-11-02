@@ -3,6 +3,7 @@ import { getDb } from "@/lib/mongodb";
 import { getUserFromRequest } from "@/lib/db";
 import { ObjectId } from "mongodb";
 import { ECONOMY } from "@/app/lib/economy";
+import { canChangeDueTime, getNextDueTimeUnlockDate } from "@/app/lib/utils";
 
 export async function GET(request) {
   try {
@@ -113,6 +114,11 @@ export async function GET(request) {
         bestStreak: Math.max(userDoc?.bestStreak ?? 0, monthlyStreak),
         unpaidFines: userDoc?.unpaidFines ?? 0,
         finishedMode: userDoc?.finishedMode ?? "section",
+        dueTime: userDoc?.dueTime || "12:00 AM",
+        dueHour: typeof userDoc?.dueHour === "number" ? userDoc.dueHour : 0,
+        dueTimeChangedAt: userDoc?.dueTimeChangedAt || null,
+        canChangeDueTime: canChangeDueTime(userDoc?.dueTimeChangedAt),
+        nextDueTimeUnlockDate: getNextDueTimeUnlockDate(userDoc?.dueTimeChangedAt),
         createdAt: userDoc?.createdAt || new Date().toISOString(),
       },
       tasks: tasks.map((t) => ({ ...t, id: t._id.toString() })),
@@ -201,6 +207,41 @@ export async function POST(request) {
               preferences: updatedUser.preferences,
             }
           : null,
+      });
+    }
+
+    if (action === "update-due-time") {
+      const { dueTime, dueHour } = payload || {};
+      const existing = await db.collection("user").findOne(userFilter);
+      if (!canChangeDueTime(existing?.dueTimeChangedAt)) {
+        return NextResponse.json({
+          error: `Due cutoff time is locked until ${getNextDueTimeUnlockDate(existing?.dueTimeChangedAt)}. You can only change it once per month.`,
+        }, { status: 400 });
+      }
+
+      const validHours = [0, 3, 6, 9, 12, 15, 18, 21];
+      const parsedHour = Number(dueHour);
+      if (!validHours.includes(parsedHour) || !dueTime) {
+        return NextResponse.json({ error: "Invalid due time selection" }, { status: 400 });
+      }
+
+      const now = new Date().toISOString();
+      await db.collection("user").updateOne(userFilter, {
+        $set: {
+          dueTime: String(dueTime),
+          dueHour: parsedHour,
+          dueTimeChangedAt: now,
+          updatedAt: now,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        dueTime: String(dueTime),
+        dueHour: parsedHour,
+        dueTimeChangedAt: now,
+        canChangeDueTime: false,
+        nextDueTimeUnlockDate: getNextDueTimeUnlockDate(now),
       });
     }
 

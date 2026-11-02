@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowRight,
+  Clock,
   Coins,
   Flame,
   Shield,
@@ -28,6 +29,8 @@ export default function DashboardPage() {
     monthTotals,
     streak,
     monthlyStreak,
+    dueTime,
+    setIsDueModalOpen,
   } = useWorkspace();
   const { data: session } = useSession();
 
@@ -75,6 +78,31 @@ export default function DashboardPage() {
           </Link>
         </div>
       </header>
+
+      {/* Due Time Cutoff Announcement Banner */}
+      <div className="neu-soft flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 rounded-2xl px-5 py-3.5 border border-white/[0.04] shadow-sm">
+        <div className="flex items-center gap-3">
+          <span className="neu-inset-soft grid size-9 shrink-0 place-items-center rounded-xl text-accent">
+            <Clock className="size-4" />
+          </span>
+          <div>
+            <p className="text-xs text-ink font-medium">
+              Work tasks will be due at <span className="text-accent font-semibold">{dueTime || "12:00 AM"}</span>.
+            </p>
+            <p className="text-[10px] text-faint mt-0.5">
+              Reset occurs daily at your chosen cutoff · Can only be changed once per month
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsDueModalOpen(true)}
+          className="neu-button inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl px-3.5 py-1.5 text-xs font-semibold text-accent hover:text-accent-strong transition-all"
+        >
+          <span>Change the time</span>
+          <ArrowRight className="size-3" />
+        </button>
+      </div>
 
       {/* 4 Monthly KPI Cards */}
       <section className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">

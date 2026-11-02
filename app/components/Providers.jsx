@@ -11,6 +11,7 @@ import {
 } from "react";
 import Toast from "./Toast";
 import LoginView from "./LoginView";
+import DueTimeModal from "./DueTimeModal";
 import { useSession } from "@/lib/auth-client";
 import { createInitialDays, mockUser } from "../data/mockData";
 import {
@@ -20,7 +21,7 @@ import {
   calculateMonthlyStreak,
   summarizeHistory,
 } from "../lib/economy";
-import { addDays, dateFromKey, formatCoins, getDateKey } from "../lib/utils";
+import { addDays, dateFromKey, formatCoins, getDateKey, getEffectiveDateKey } from "../lib/utils";
 
 const WorkspaceContext = createContext(null);
 const TOAST_DURATION = 3600;
@@ -184,6 +185,10 @@ export default function Providers({ children }) {
   const [historyMode, setHistoryMode] = useState("balanced");
   const [socialFocus, setSocialFocus] = useState("mixed");
   const [streak, setStreak] = useState(0);
+  const [dueTime, setDueTime] = useState("12:00 AM");
+  const [dueHour, setDueHour] = useState(0);
+  const [dueTimeChangedAt, setDueTimeChangedAt] = useState(null);
+  const [isDueModalOpen, setIsDueModalOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
@@ -267,6 +272,9 @@ export default function Providers({ children }) {
         }
 
         if (Number.isFinite(data.user.coins)) setCoins(data.user.coins);
+        if (data.user.dueTime) setDueTime(data.user.dueTime);
+        if (typeof data.user.dueHour === "number") setDueHour(data.user.dueHour);
+        if (data.user.dueTimeChangedAt) setDueTimeChangedAt(data.user.dueTimeChangedAt);
         if (data.user.finishedMode && FINISHED_MODES.has(data.user.finishedMode)) {
           setFinishedMode(data.user.finishedMode);
         }
@@ -277,7 +285,8 @@ export default function Providers({ children }) {
           setTransactions(data.transactions);
         }
         if (Array.isArray(data.tasks)) {
-          const todayKey = getDateKey(new Date());
+          const userCutoffHour = typeof data.user.dueHour === "number" ? data.user.dueHour : 0;
+          const todayKey = getEffectiveDateKey(new Date(), userCutoffHour);
           const map = new Map();
           map.set(todayKey, {
             id: todayKey,
@@ -349,7 +358,7 @@ export default function Providers({ children }) {
 
   useEffect(() => {
     const rotateDay = () => {
-      const key = getDateKey(new Date());
+      const key = getEffectiveDateKey(new Date(), dueHour);
 
       setDays((current) => {
         if (current.some((day) => day.date === key)) return current;
@@ -383,9 +392,15 @@ export default function Providers({ children }) {
     return;
   }, []);
 
+  const [effectiveTodayKey, setEffectiveTodayKey] = useState(() => days[0]?.date || "");
+
+  useEffect(() => {
+    setEffectiveTodayKey(getEffectiveDateKey(new Date(), dueHour));
+  }, [dueHour]);
+
   const todayDay = days[0] ?? {
-    id: getDateKey(new Date()),
-    date: getDateKey(new Date()),
+    id: effectiveTodayKey,
+    date: effectiveTodayKey,
     tasks: [],
     settled: false,
     settledAt: null,
@@ -613,7 +628,7 @@ export default function Providers({ children }) {
     const trimmed = title.trim();
     if (!trimmed) return false;
 
-    const key = getDateKey(new Date());
+    const key = getEffectiveDateKey(new Date(), dueHour);
     const task = {
       id: `task-${Date.now()}`,
       title: trimmed,
@@ -1118,6 +1133,44 @@ export default function Providers({ children }) {
     );
   };
 
+  const updateDueTime = useCallback(
+    async (newDueTime, newDueHour) => {
+      if (!requireAuth("change task due cutoff time")) return false;
+      try {
+        const res = await fetch("/api/workspace", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update-due-time",
+            payload: { dueTime: newDueTime, dueHour: newDueHour },
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          notify(
+            "Update Locked",
+            data.error || "Could not update due time.",
+            "danger",
+          );
+          return false;
+        }
+        setDueTime(data.dueTime);
+        setDueHour(data.dueHour);
+        setDueTimeChangedAt(data.dueTimeChangedAt);
+        notify(
+          "Due Time Updated",
+          `Work tasks will now be due at ${data.dueTime}. Locked until next month.`,
+          "success",
+        );
+        return true;
+      } catch (err) {
+        notify("Update Failed", "Could not save cutoff time.", "danger");
+        return false;
+      }
+    },
+    [requireAuth, notify],
+  );
+
   const resetDemo = () => {
     setDays(normalizeDays(createInitialDays()));
     setCoins(ECONOMY.startingCoins);
@@ -1185,12 +1238,22 @@ export default function Providers({ children }) {
         simulateMissedDay,
         waiveAllFines,
         resetDemo,
+        dueTime,
+        dueHour,
+        dueTimeChangedAt,
+        isDueModalOpen,
+        setIsDueModalOpen,
+        updateDueTime,
         requireAuth,
         setShowAuthModal,
       }}
     >
       {children}
       <Toast key={toast?.id ?? "empty"} toast={toast} onClose={dismissToast} />
+      <DueTimeModal
+        open={isDueModalOpen}
+        onClose={() => setIsDueModalOpen(false)}
+      />
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div
