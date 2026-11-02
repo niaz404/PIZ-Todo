@@ -49,10 +49,12 @@ export default function Sidebar({ pendingTasks, open, onClose }) {
       <nav aria-label="Main navigation" className="mt-8 space-y-1.5 flex-1">
         {navItems.map((item) => {
           const Icon = navIcons[item.icon] ?? Gift;
+          const isTasksItem = item.href === "/tasks";
           const active =
             item.href === "/"
               ? pathname === "/"
-              : pathname.startsWith(item.href);
+              : pathname.startsWith(item.href) ||
+                (isTasksItem && (pathname === "/task" || pathname === "/todo"));
 
           return (
             <Link

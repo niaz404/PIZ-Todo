@@ -13,7 +13,7 @@ export default function Header({ title, onMenuClick }) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const profileActive = pathname === "/profile";
-  const todoActive = pathname === "/tasks";
+  const todoActive = pathname === "/tasks" || pathname === "/task" || pathname === "/todo";
 
   const user = session?.user;
   const userInitials = user?.name

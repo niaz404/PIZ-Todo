@@ -457,7 +457,10 @@ export function GithubStreakHeatmap({
     <div className="w-full h-full flex flex-col justify-between">
       <div>
         {/* Month Header Label */}
-        <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent/90">
+        <div
+          suppressHydrationWarning
+          className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent/90"
+        >
           {monthName} {year} · {daysInMonth} Days
         </div>
 
@@ -533,7 +536,7 @@ export function GithubStreakHeatmap({
 
       {/* Legend & Summary */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.05] pt-3 text-[10px] text-faint">
-        <span>{totalTasks} tasks completed in {monthName}</span>
+        <span suppressHydrationWarning>{totalTasks} tasks completed in {monthName}</span>
         <div className="flex items-center gap-1.5">
           <span>Less</span>
           <span

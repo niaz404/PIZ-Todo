@@ -177,7 +177,7 @@ function buildSettlement({ days, todayKey, coins, fines, now }) {
 export default function Providers({ children }) {
   const { data: session } = useSession();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [days, setDays] = useState(() => normalizeDays(createInitialDays()));
+  const [days, setDays] = useState([]);
   const [coins, setCoins] = useState(ECONOMY.startingCoins);
   const [transactions, setTransactions] = useState([]);
   const [fines, setFines] = useState([]);
@@ -230,6 +230,23 @@ export default function Providers({ children }) {
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const authErr = urlParams.get("error");
+    if (authErr) {
+      notify(
+        "Authentication Error",
+        authErr === "state_mismatch"
+          ? "OAuth session expired or mismatched. Please try signing in again."
+          : `Sign in error: ${authErr.replace(/_/g, " ")}.`,
+        "danger",
+      );
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, "", cleanUrl);
+    }
+  }, [notify]);
 
   useEffect(() => {
     // If not logged in, reset workspace state so no user data is exposed to visitors

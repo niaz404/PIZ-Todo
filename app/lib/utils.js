@@ -2,17 +2,11 @@ export function formatCoins(value) {
   return new Intl.NumberFormat("en-US").format(Math.max(0, value));
 }
 
-const STABLE_SSR_DATE = new Date(2026, 9, 31);
-
-export function getSafeToday() {
-  if (typeof window === "undefined") {
-    return STABLE_SSR_DATE;
-  }
-  return new Date();
-}
-
 export function getDateKey(date) {
-  const target = date || getSafeToday();
+  const target = date ? new Date(date) : null;
+  if (!target || isNaN(target.getTime())) {
+    return "2026-11-01";
+  }
   const year = target.getFullYear();
   const month = String(target.getMonth() + 1).padStart(2, "0");
   const day = String(target.getDate()).padStart(2, "0");
@@ -20,7 +14,10 @@ export function getDateKey(date) {
 }
 
 export function getEffectiveDateKey(date, cutoffHour = 0) {
-  const target = date ? new Date(date) : getSafeToday();
+  const target = date ? new Date(date) : null;
+  if (!target || isNaN(target.getTime())) {
+    return "2026-11-01";
+  }
   const adjusted = new Date(target.getTime() - (Number(cutoffHour) || 0) * 60 * 60 * 1000);
   const year = adjusted.getFullYear();
   const month = String(adjusted.getMonth() + 1).padStart(2, "0");
@@ -62,9 +59,9 @@ export function getNextDueTimeUnlockDate(dueTimeChangedAt) {
 }
 
 export function dateFromKey(key) {
-  if (!key || typeof key !== "string") return getSafeToday();
+  if (!key || typeof key !== "string") return new Date(2026, 10, 1);
   const parts = key.split("-").map(Number);
-  if (parts.length !== 3 || parts.some(isNaN)) return getSafeToday();
+  if (parts.length !== 3 || parts.some(isNaN)) return new Date(2026, 10, 1);
   const [year, month, day] = parts;
   return new Date(year, month - 1, day);
 }

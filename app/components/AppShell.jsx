@@ -9,6 +9,8 @@ import { useWorkspace } from "./Providers";
 const pageTitles = {
   "/": "Dashboard",
   "/tasks": "Todo",
+  "/task": "Todo",
+  "/todo": "Todo",
   "/community": "Community",
   "/store": "Store",
   "/profile": "Profile",
@@ -17,6 +19,8 @@ const pageTitles = {
 const pageWidths = {
   "/": "max-w-6xl",
   "/tasks": "max-w-4xl",
+  "/task": "max-w-4xl",
+  "/todo": "max-w-4xl",
   "/community": "max-w-6xl",
   "/store": "max-w-4xl",
   "/profile": "max-w-5xl",
