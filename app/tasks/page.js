@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowRight,
   Check,
   ChevronDown,
+  Clock,
   Coins,
   Lock,
 } from "../components/icons";
@@ -36,6 +38,8 @@ export default function TodoPage() {
     toggleTask,
     updateTask,
     deleteTask,
+    dueTime,
+    setIsDueModalOpen,
   } = useWorkspace();
   const [draft, setDraft] = useState("");
   const [collapsedSections, setCollapsedSections] = useState(() => new Set());
@@ -150,7 +154,32 @@ export default function TodoPage() {
     <div className="mx-auto w-full max-w-4xl">
       <h1 className="sr-only">Todo</h1>
 
-      <div className="animate-page">
+      <div className="animate-page space-y-3.5">
+        {/* Task Due Cutoff Note */}
+        <div className="neu-soft flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl px-4 py-3 border border-white/[0.04]">
+          <div className="flex items-center gap-3">
+            <span className="neu-inset-soft grid size-8 shrink-0 place-items-center rounded-xl text-accent">
+              <Clock className="size-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs text-ink font-medium">
+                Work tasks will be due at <span className="text-accent font-semibold">{dueTime || "12:00 AM"}</span>.
+              </p>
+              <p className="text-[10px] text-faint mt-0.5">
+                Day cycle rolls over at cutoff · Can be changed once per month
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsDueModalOpen(true)}
+            className="neu-button inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl px-3 py-1.5 text-[11px] font-semibold text-accent hover:text-accent-strong transition-all shrink-0"
+          >
+            <span>Change the time</span>
+            <ArrowRight className="size-3" />
+          </button>
+        </div>
+
         <form
           onSubmit={handleAdd}
           className="neu rounded-[24px] p-2.5 sm:p-3"
