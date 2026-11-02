@@ -22,6 +22,7 @@ export async function POST(request) {
     const userIdStr = String(user.id);
 
     const newTask = {
+      id: body.id || `task-${Date.now()}`,
       userId: userIdStr,
       date: body.date || todayKey,
       title,
@@ -67,12 +68,24 @@ export async function PATCH(request) {
       filters.push({ _id: new ObjectId(taskId) });
     }
 
+    const userIdStr = String(user.id);
     const userFilter = {
-      userId: String(user.id),
-      $or: filters,
+      $and: [
+        {
+          $or: [
+            { userId: userIdStr },
+            ...(ObjectId.isValid(userIdStr) ? [{ userId: new ObjectId(userIdStr) }] : []),
+          ],
+        },
+        { $or: filters },
+      ],
     };
 
     const updateFields = { ...patch, updatedAt: new Date().toISOString() };
+    delete updateFields._id;
+    delete updateFields.id;
+    delete updateFields.userId;
+
     const updateResult = await db.collection("tasks").updateOne(userFilter, { $set: updateFields });
 
     if (updateResult.matchedCount === 0) {
@@ -109,9 +122,17 @@ export async function DELETE(request) {
       filters.push({ _id: new ObjectId(taskId) });
     }
 
+    const userIdStr = String(user.id);
     const userFilter = {
-      userId: String(user.id),
-      $or: filters,
+      $and: [
+        {
+          $or: [
+            { userId: userIdStr },
+            ...(ObjectId.isValid(userIdStr) ? [{ userId: new ObjectId(userIdStr) }] : []),
+          ],
+        },
+        { $or: filters },
+      ],
     };
 
     const deleteResult = await db.collection("tasks").deleteOne(userFilter);

@@ -38,7 +38,7 @@ export default function TodoTaskRow({
   useEffect(() => {
     if (!confirmingDelete) return;
 
-    const timer = setTimeout(() => setConfirmingDelete(false), 3200);
+    const timer = setTimeout(() => setConfirmingDelete(false), 5000);
     return () => clearTimeout(timer);
   }, [confirmingDelete]);
 
@@ -166,37 +166,59 @@ export default function TodoTaskRow({
         <div className="flex shrink-0 items-center gap-1">
           {!editing ? (
             <>
-              <button
-                type="button"
-                onClick={startEditing}
-                aria-label={`Edit "${task.title}"`}
-                title="Edit task"
-                className="grid size-7 place-items-center rounded-lg text-faint/80 transition-colors duration-200 hover:bg-white/[0.05] hover:text-ink"
-              >
-                <Pencil className="size-3.5" />
-              </button>
+              {!confirmingDelete && (
+                <button
+                  type="button"
+                  onClick={startEditing}
+                  aria-label={`Edit "${task.title}"`}
+                  title="Edit task"
+                  className="grid size-7 place-items-center rounded-lg text-faint/80 transition-colors duration-200 hover:bg-white/[0.05] hover:text-ink"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={handleDelete}
-                aria-label={
-                  confirmingDelete
-                    ? `Confirm delete "${task.title}"`
-                    : `Delete "${task.title}"`
-                }
-                title={
-                  confirmingDelete
-                    ? "Confirm delete"
-                    : "Delete task"
-                }
-                className={`grid size-7 place-items-center rounded-lg transition-colors duration-200 ${
-                  confirmingDelete
-                    ? "bg-danger/10 text-danger"
-                    : "text-faint/80 hover:bg-white/[0.05] hover:text-danger"
-                }`}
-              >
-                <Trash2 className="size-3.5" />
-              </button>
+              {confirmingDelete ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmingDelete(false);
+                    }}
+                    className="rounded-lg px-2 py-1 text-[11px] font-medium text-faint hover:text-ink hover:bg-white/[0.06] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete?.(task.id);
+                      setConfirmingDelete(false);
+                    }}
+                    aria-label={`Confirm delete "${task.title}"`}
+                    title="Confirm delete"
+                    className="flex items-center gap-1 rounded-lg bg-danger/20 hover:bg-danger/30 text-danger px-2.5 py-1 text-[11px] font-semibold border border-danger/30 transition-all shadow-sm"
+                  >
+                    <Trash2 className="size-3" />
+                    <span>Delete?</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmingDelete(true);
+                  }}
+                  aria-label={`Delete "${task.title}"`}
+                  title="Delete task"
+                  className="grid size-7 place-items-center rounded-lg text-faint/80 transition-colors duration-200 hover:bg-white/[0.05] hover:text-danger"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              )}
 
               <button
                 type="button"

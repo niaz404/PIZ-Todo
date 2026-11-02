@@ -11,6 +11,13 @@ export default function SubtaskManager({ task, compact = false }) {
   const [draft, setDraft] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [confirmingSubtaskId, setConfirmingSubtaskId] = useState(null);
+
+  useEffect(() => {
+    if (!confirmingSubtaskId) return;
+    const timer = setTimeout(() => setConfirmingSubtaskId(null), 4000);
+    return () => clearTimeout(timer);
+  }, [confirmingSubtaskId]);
 
   const subtasks = task.subtasks ?? [];
   const doneSubtasks = subtasks.filter((subtask) => subtask.done).length;
@@ -147,15 +154,37 @@ export default function SubtaskManager({ task, compact = false }) {
                   >
                     <Pencil className={iconSize} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => deleteSubtask(task.id, subtask.id)}
-                    aria-label={`Delete subtask "${subtask.title}"`}
-                    title="Delete subtask"
-                    className={`grid ${actionSize} shrink-0 place-items-center rounded-md text-faint/70 transition-all duration-200 hover:bg-white/[0.06] hover:text-danger group-hover/sub:text-faint`}
-                  >
-                    <Trash2 className={iconSize} />
-                  </button>
+                  {confirmingSubtaskId === subtask.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingSubtaskId(null)}
+                        className="px-1.5 py-0.5 text-[10px] text-faint hover:text-ink"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          deleteSubtask(task.id, subtask.id);
+                          setConfirmingSubtaskId(null);
+                        }}
+                        className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-danger bg-danger/20 hover:bg-danger/30"
+                      >
+                        Delete?
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingSubtaskId(subtask.id)}
+                      aria-label={`Delete subtask "${subtask.title}"`}
+                      title="Delete subtask"
+                      className={`grid ${actionSize} shrink-0 place-items-center rounded-md text-faint/70 transition-all duration-200 hover:bg-white/[0.06] hover:text-danger group-hover/sub:text-faint`}
+                    >
+                      <Trash2 className={iconSize} />
+                    </button>
+                  )}
                 </>
               )}
             </div>
