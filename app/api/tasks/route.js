@@ -3,6 +3,7 @@ import { getDb } from "@/lib/mongodb";
 import { getUserFromRequest } from "@/lib/db";
 import { ObjectId } from "mongodb";
 import { getDateKey } from "@/app/lib/utils";
+import { ECONOMY } from "@/app/lib/economy";
 
 export async function POST(request) {
   try {
@@ -27,7 +28,7 @@ export async function POST(request) {
       date: body.date || todayKey,
       title,
       tag: body.tag || "Personal",
-      reward: Number(body.reward) || 15,
+      reward: Number(body.reward) || ECONOMY.defaultTaskReward,
       time: body.time || "Today",
       done: Boolean(body.done),
       notes: body.notes || "",
@@ -81,21 +82,107 @@ export async function PATCH(request) {
       ],
     };
 
-    const updateFields = { ...patch, updatedAt: new Date().toISOString() };
+    const existingTask = await db.collection("tasks").findOne(userFilter);
+    if (!existingTask) {
+      return NextResponse.json({ error: "Task not found or access denied" }, { status: 404 });
+    }
+
+    const userObjFilter = {
+      $or: [
+        { _id: userIdStr },
+        ...(ObjectId.isValid(userIdStr) ? [{ _id: new ObjectId(userIdStr) }] : []),
+      ],
+    };
+
+    const now = new Date().toISOString();
+    const todayKey = existingTask.date || getDateKey(new Date());
+
+    // 1. Completion logic & 150 daily coin cap
+    let coinsEarnedChange = 0;
+    if (patch.done === true && !existingTask.done) {
+      // Check if task has subtasks and all subtasks are finished
+      if (Array.isArray(existingTask.subtasks) && existingTask.subtasks.length > 0) {
+        const hasUnfinishedSubtasks = existingTask.subtasks.some((s) => !s.done);
+        if (hasUnfinishedSubtasks) {
+          return NextResponse.json(
+            { error: "Complete all subtasks before checking off the parent task." },
+            { status: 400 },
+          );
+        }
+      }
+
+      // Check daily cap (Max 150 coins/day from task rewards)
+      const todayRewards = await db.collection("transactions").find({
+        userId: userIdStr,
+        type: "task-reward",
+        date: todayKey,
+      }).toArray();
+      const alreadyEarnedToday = todayRewards.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+      const remainingCap = Math.max(0, ECONOMY.dailyMaxTaskCoins - alreadyEarnedToday);
+      const actualReward = Math.min(ECONOMY.defaultTaskReward, remainingCap);
+
+      coinsEarnedChange = actualReward;
+
+      if (actualReward > 0) {
+        await db.collection("user").updateOne(userObjFilter, {
+          $inc: { earnedCoins: actualReward, coins: actualReward },
+          $set: { updatedAt: now },
+        });
+        await db.collection("transactions").insertOne({
+          userId: userIdStr,
+          type: "task-reward",
+          amount: actualReward,
+          label: `Completed "${existingTask.title}"${remainingCap <= actualReward ? " (Daily Cap Reached)" : ""}`,
+          date: todayKey,
+          createdAt: now,
+        });
+      }
+    } else if (patch.done === false && existingTask.done) {
+      // Reopened task: reverse reward
+      const revokeAmount = ECONOMY.defaultTaskReward;
+      await db.collection("user").updateOne(userObjFilter, {
+        $inc: { earnedCoins: -revokeAmount, coins: -revokeAmount },
+        $set: { updatedAt: now },
+      });
+      await db.collection("transactions").insertOne({
+        userId: userIdStr,
+        type: "reopen",
+        amount: -revokeAmount,
+        label: `Reopened "${existingTask.title}"`,
+        date: todayKey,
+        createdAt: now,
+      });
+    }
+
+    // 2. Title edit fee (-2 coins)
+    if (typeof patch.title === "string" && patch.title.trim() && patch.title.trim() !== existingTask.title) {
+      const editFee = ECONOMY.taskEditCost;
+      await db.collection("user").updateOne(userObjFilter, {
+        $inc: { earnedCoins: -editFee, coins: -editFee },
+        $set: { updatedAt: now },
+      });
+      await db.collection("transactions").insertOne({
+        userId: userIdStr,
+        type: "task-edit",
+        amount: -editFee,
+        label: `Edit fee for "${existingTask.title}"`,
+        date: todayKey,
+        createdAt: now,
+      });
+    }
+
+    const updateFields = { ...patch, updatedAt: now };
     delete updateFields._id;
     delete updateFields.id;
     delete updateFields.userId;
 
-    const updateResult = await db.collection("tasks").updateOne(userFilter, { $set: updateFields });
-
-    if (updateResult.matchedCount === 0) {
-      return NextResponse.json({ error: "Task not found or access denied" }, { status: 404 });
-    }
+    await db.collection("tasks").updateOne(userFilter, { $set: updateFields });
 
     const updatedTask = await db.collection("tasks").findOne(userFilter);
     return NextResponse.json({
       success: true,
       task: updatedTask ? { ...updatedTask, id: updatedTask._id.toString() } : null,
+      coinsEarnedChange,
     });
   } catch (err) {
     console.error("Task update error:", err);
@@ -135,10 +222,36 @@ export async function DELETE(request) {
       ],
     };
 
-    const deleteResult = await db.collection("tasks").deleteOne(userFilter);
-    if (deleteResult.deletedCount === 0) {
+    const existingTask = await db.collection("tasks").findOne(userFilter);
+    if (!existingTask) {
       return NextResponse.json({ error: "Task not found or access denied" }, { status: 404 });
     }
+
+    const userObjFilter = {
+      $or: [
+        { _id: userIdStr },
+        ...(ObjectId.isValid(userIdStr) ? [{ _id: new ObjectId(userIdStr) }] : []),
+      ],
+    };
+
+    const now = new Date().toISOString();
+    const deleteFee = ECONOMY.taskDeleteCost;
+
+    // Deduct 5 coins delete fee
+    await db.collection("user").updateOne(userObjFilter, {
+      $inc: { earnedCoins: -deleteFee, coins: -deleteFee },
+      $set: { updatedAt: now },
+    });
+    await db.collection("transactions").insertOne({
+      userId: userIdStr,
+      type: "task-delete",
+      amount: -deleteFee,
+      label: `Delete fee for "${existingTask.title}"`,
+      date: existingTask.date || getDateKey(new Date()),
+      createdAt: now,
+    });
+
+    await db.collection("tasks").deleteOne(userFilter);
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Task deletion error:", err);

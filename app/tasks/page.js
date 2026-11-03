@@ -29,6 +29,7 @@ export default function TodoPage() {
     todayDay,
     completedTasks,
     availableTodayCoins,
+    todayTaskCoinsEarned,
     finishedMode,
     isLocked,
     unpaidFineCount,
@@ -155,7 +156,7 @@ export default function TodoPage() {
       <h1 className="sr-only">Todo</h1>
 
       <div className="animate-page space-y-3.5">
-        {/* Task Due Cutoff Note */}
+        {/* Task Due Cutoff Note & Daily Coins */}
         <div className="neu-soft flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl px-4 py-3 border border-white/[0.04]">
           <div className="flex items-center gap-3">
             <span className="neu-inset-soft grid size-8 shrink-0 place-items-center rounded-xl text-accent">
@@ -170,14 +171,24 @@ export default function TodoPage() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsDueModalOpen(true)}
-            className="neu-button inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl px-3 py-1.5 text-[11px] font-semibold text-accent hover:text-accent-strong transition-all shrink-0"
-          >
-            <span>Change the time</span>
-            <ArrowRight className="size-3" />
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <div
+              className="neu-inset-soft flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11px] font-medium text-ink"
+              title="Daily reward cap for completed tasks"
+            >
+              <Coins className="size-3.5 text-accent" />
+              <span>{todayTaskCoinsEarned ?? 0} / {ECONOMY.dailyMaxTaskCoins || 150}</span>
+              <span className="text-[9px] text-faint">today</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsDueModalOpen(true)}
+              className="neu-button inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold text-accent hover:text-accent-strong transition-all shrink-0"
+            >
+              <span>Change time</span>
+              <ArrowRight className="size-3" />
+            </button>
+          </div>
         </div>
 
         <form

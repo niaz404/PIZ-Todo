@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookOpen,
   Gift,
   LayoutDashboard,
   ListChecks,
@@ -20,6 +21,7 @@ const navIcons = {
   tasks: ListChecks,
   community: Users,
   store: Store,
+  guide: BookOpen,
   profile: User,
   settings: Settings,
 };

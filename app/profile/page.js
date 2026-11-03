@@ -9,6 +9,7 @@ import {
   Clock,
   Coins,
   Flame,
+  Heart,
   Lock,
   LogOut,
   Pencil,
@@ -54,6 +55,10 @@ export default function ProfilePage() {
     dueHour,
     dueTimeChangedAt,
     setIsDueModalOpen,
+    hearts,
+    autoPayFines,
+    toggleAutoPay,
+    setIsPhoenixModalOpen,
   } = useWorkspace();
   const { data: session } = useSession();
 
@@ -561,6 +566,120 @@ export default function ProfilePage() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Accountability, Heart Vault & Automation Settings */}
+      <section className="neu rounded-[28px] p-6 sm:p-7 border border-white/[0.05] space-y-6">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
+            Accountability & Safety
+          </p>
+          <h3 className="mt-1 font-display text-xl font-normal text-ink">
+            Economy & Settlement Preferences
+          </h3>
+          <p className="mt-1 text-xs text-muted max-w-xl">
+            Configure how your account handles missed task accountability, permanent wealth preservation, and recovery protocol.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Auto-Pay Fines Toggle */}
+          <div className="neu-soft rounded-2xl p-5 flex flex-col justify-between gap-4">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="neu-inset-soft grid size-10 place-items-center rounded-xl text-accent">
+                  <Shield className="size-5" />
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={Boolean(autoPayFines)}
+                  onClick={() => toggleAutoPay(!autoPayFines)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    autoPayFines ? "bg-accent" : "bg-white/[0.12]"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block size-5 transform rounded-full bg-ink shadow ring-0 transition duration-200 ease-in-out ${
+                      autoPayFines ? "translate-x-5 bg-[#17130c]" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+              <h4 className="mt-3 text-sm font-semibold text-ink">Auto-Pay Fines</h4>
+              <p className="mt-1 text-xs text-muted leading-relaxed">
+                When enabled, overdue task fines (50 coins) are automatically settled at daily cutoff if your balance permits, preventing persistent alerts. Default is manual.
+              </p>
+            </div>
+            <p className="text-[10px] text-faint">
+              Status: <span className="font-semibold text-ink">{autoPayFines ? "Automatic" : "Manual confirmation"}</span>
+            </p>
+          </div>
+
+          {/* Heart Wealth Vault */}
+          <div className="neu-soft rounded-2xl p-5 flex flex-col justify-between gap-4">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="neu-inset-soft grid size-10 place-items-center rounded-xl text-rose-400">
+                  <Heart className="size-5 fill-rose-500/20 text-rose-500" />
+                </span>
+                <span className="rounded-full bg-rose-500/15 border border-rose-500/30 px-2.5 py-0.5 text-[10px] font-semibold text-rose-300">
+                  {hearts ?? 0} / 3 Vaulted
+                </span>
+              </div>
+              <h4 className="mt-3 text-sm font-semibold text-ink">Heart Wealth Storage</h4>
+              <p className="mt-1 text-xs text-muted leading-relaxed">
+                Hearts are permanent wealth immune to weekly weekend decay. Each Heart waives 1 missed task fine (worth 50 coins). Acquire up to 3 at the Store.
+              </p>
+            </div>
+            <Link
+              href="/store"
+              className="neu-button inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-accent hover:text-accent-strong"
+            >
+              <span>Visit Store Vault</span>
+              <ArrowRight className="size-3" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Phoenix Protocol Recovery Card */}
+        <div className="neu-soft rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-accent/15">
+          <div className="flex items-start gap-3.5">
+            <span className="neu-inset-soft grid size-10 shrink-0 place-items-center rounded-xl text-accent">
+              <Sparkles className="size-5" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-semibold text-ink">Phoenix Comeback Protocol</h4>
+                {unpaidFineCount >= 3 ? (
+                  <span className="rounded bg-accent/20 px-2 py-0.5 text-[9px] font-semibold text-accent uppercase tracking-wider">
+                    Eligible for Reset
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-faint">
+                    (Requires 3+ unpaid fines)
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-muted leading-relaxed max-w-xl">
+                Stuck in debt? The Phoenix Protocol offers a clean-slate fresh start: waives all outstanding fines, grants 25 starter coins, and begins a 3-day probation. Available once every 30 days.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsPhoenixModalOpen(true)}
+            disabled={unpaidFineCount < 3}
+            className={`neu-accent shrink-0 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
+              unpaidFineCount >= 3
+                ? "hover:scale-[1.02]"
+                : "opacity-40 cursor-not-allowed"
+            }`}
+          >
+            Activate Phoenix
+          </button>
         </div>
       </section>
 

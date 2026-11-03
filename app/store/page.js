@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Check,
   Coins,
+  Heart,
   Lock,
   Shield,
   Sparkles,
@@ -16,6 +17,11 @@ import { formatCoins } from "../lib/utils";
 export default function StorePage() {
   const {
     coins,
+    earnedCoins,
+    purchasedCoins,
+    hearts,
+    buyHeart,
+    payFineWithHeart,
     buyCoins,
     payFines,
     unpaidFineCount,
@@ -66,7 +72,7 @@ export default function StorePage() {
               {formatCoins(coins)} coins
             </p>
             <p className="text-[10px] tabular-nums text-faint">
-              ≈ {formatCoins(coins)} Tk
+              {formatCoins(earnedCoins ?? coins)} Earned · {formatCoins(purchasedCoins ?? 0)} Purchased
             </p>
           </div>
         </div>
@@ -106,15 +112,23 @@ export default function StorePage() {
                       } outstanding`}
                 </h2>
                 <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-muted">
-                  {formatCoins(totalOutstanding)} coins needed to fully clear fines.{" "}
-                  {payableNow > 0
-                    ? `You can pay ${payableNow} right now with your earned balance.`
-                    : "Complete more daily tasks to earn coins and unlock your todos."}
+                  {formatCoins(totalOutstanding)} coins needed to fully clear fines (50 coins per missed task).
+                  {(hearts ?? 0) > 0 ? ` You hold ${hearts} Heart${hearts === 1 ? "" : "s"} ready to waive fines!` : ""}
                 </p>
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex flex-wrap shrink-0 items-center gap-2">
+              {(hearts ?? 0) > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => payFineWithHeart()}
+                  className="neu-button inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 transition-all"
+                >
+                  <Heart className="size-3.5 text-rose-400 fill-rose-400" />
+                  <span>Use 1 Heart</span>
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={payFines}
@@ -133,6 +147,81 @@ export default function StorePage() {
           </div>
         </section>
       ) : null}
+
+      {/* Wealth Store & Items */}
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3 px-1">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
+              Wealth Vault & Protection
+            </p>
+            <h2 className="mt-1 font-display text-2xl font-normal tracking-[-0.015em] text-ink">
+              Store Items
+            </h2>
+          </div>
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-accent">
+            <Shield className="size-3 text-accent" />
+            Permanent Wealth Storage
+          </span>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Heart Item Card */}
+          <article className="neu-deep relative flex flex-col justify-between rounded-3xl p-6 ring-1 ring-rose-500/30 shadow-[0_12px_32px_-12px_rgba(244,63,94,0.18)]">
+            <span className="absolute -top-2.5 right-6 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-white shadow-sm">
+              <Heart className="size-2.5 fill-current" />
+              {hearts ?? 0}/{ECONOMY.maxHearts || 3} Held
+            </span>
+
+            <div>
+              <div className="flex items-start justify-between gap-3">
+                <span className="neu-inset-soft grid size-12 place-items-center rounded-2xl text-rose-400">
+                  <Heart className="size-6 text-rose-500 fill-rose-500/20" />
+                </span>
+                <span className="rounded-xl bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-rose-300">
+                  Insurance Vault
+                </span>
+              </div>
+
+              <div className="mt-5">
+                <p className="text-2xl font-semibold tracking-tight text-ink">
+                  Heart Protection
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-muted">
+                  Stores wealth permanently immune to weekly decay. Consuming 1 Heart waives 1 missed task fine (worth 50 coins) and maintains your streak solvency.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-7 flex items-center justify-between border-t border-white/[0.06] pt-4">
+              <div>
+                <p className="text-[9px] uppercase tracking-[0.14em] text-faint">Price</p>
+                <p className="mt-0.5 text-lg font-bold tabular-nums text-ink">
+                  {ECONOMY.heartCost || 80} <span className="text-xs font-normal text-muted">Coins</span>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={buyHeart}
+                disabled={coins < (ECONOMY.heartCost || 80) || (hearts ?? 0) >= (ECONOMY.maxHearts || 3)}
+                className={`neu-accent inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
+                  coins < (ECONOMY.heartCost || 80) || (hearts ?? 0) >= (ECONOMY.maxHearts || 3)
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:scale-[1.02]"
+                }`}
+              >
+                <Heart className="size-3.5 fill-current" />
+                <span>
+                  {(hearts ?? 0) >= (ECONOMY.maxHearts || 3)
+                    ? "Max Capacity (3/3)"
+                    : `Buy Heart (${ECONOMY.heartCost || 80}c)`}
+                </span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
 
       {/* Production Notice: Direct Payment Gateway Coming Soon */}
       <div className="neu-inset-soft rounded-[24px] p-5 border border-accent/20 bg-accent/[0.03] flex flex-col sm:flex-row sm:items-center justify-between gap-4">

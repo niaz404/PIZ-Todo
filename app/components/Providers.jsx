@@ -12,6 +12,7 @@ import {
 import Toast from "./Toast";
 import LoginView from "./LoginView";
 import DueTimeModal from "./DueTimeModal";
+import PhoenixModal from "./PhoenixModal";
 import { useSession } from "@/lib/auth-client";
 import { createInitialDays, mockUser } from "../data/mockData";
 import {
@@ -179,6 +180,13 @@ export default function Providers({ children }) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [days, setDays] = useState([]);
   const [coins, setCoins] = useState(ECONOMY.startingCoins);
+  const [earnedCoins, setEarnedCoins] = useState(0);
+  const [purchasedCoins, setPurchasedCoins] = useState(0);
+  const [hearts, setHearts] = useState(0);
+  const [autoPayFines, setAutoPayFines] = useState(false);
+  const [lastPhoenixAt, setLastPhoenixAt] = useState(null);
+  const [probationUntil, setProbationUntil] = useState(null);
+  const [isPhoenixModalOpen, setIsPhoenixModalOpen] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [fines, setFines] = useState([]);
   const [finishedMode, setFinishedMode] = useState("section");
@@ -289,6 +297,12 @@ export default function Providers({ children }) {
         }
 
         if (Number.isFinite(data.user.coins)) setCoins(data.user.coins);
+        if (Number.isFinite(data.user.earnedCoins)) setEarnedCoins(data.user.earnedCoins);
+        if (Number.isFinite(data.user.purchasedCoins)) setPurchasedCoins(data.user.purchasedCoins);
+        if (Number.isFinite(data.user.hearts)) setHearts(data.user.hearts);
+        if (typeof data.user.autoPayFines === "boolean") setAutoPayFines(data.user.autoPayFines);
+        if (data.user.lastPhoenixAt) setLastPhoenixAt(data.user.lastPhoenixAt);
+        if (data.user.probationUntil) setProbationUntil(data.user.probationUntil);
         if (data.user.dueTime) setDueTime(data.user.dueTime);
         if (typeof data.user.dueHour === "number") setDueHour(data.user.dueHour);
         if (data.user.dueTimeChangedAt) setDueTimeChangedAt(data.user.dueTimeChangedAt);
@@ -301,6 +315,15 @@ export default function Providers({ children }) {
         if (Array.isArray(data.transactions)) {
           setTransactions(data.transactions);
         }
+
+        // Trigger overdue tasks settlement check at cutoff
+        const userCutoffHour = typeof data.user.dueHour === "number" ? data.user.dueHour : 0;
+        const currentTodayKey = getEffectiveDateKey(new Date(), userCutoffHour);
+        fetch("/api/workspace", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "settle-missed-tasks", payload: { todayKey: currentTodayKey } }),
+        }).catch(() => {});
         if (Array.isArray(data.tasks)) {
           const userCutoffHour = typeof data.user.dueHour === "number" ? data.user.dueHour : 0;
           const todayKey = getEffectiveDateKey(new Date(), userCutoffHour);
@@ -440,6 +463,12 @@ export default function Providers({ children }) {
     (sum, fine) => sum + (Number(fine.amount) || 0),
     0,
   );
+
+  const todayTaskCoinsEarned = useMemo(() => {
+    return transactions
+      .filter((tx) => tx.date === todayKey && (tx.type === "task-reward" || tx.type === "earn") && tx.amount > 0)
+      .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  }, [transactions, todayKey]);
   // Account lock disabled while coin gateway is in development
   const isLocked = false;
 
@@ -1188,6 +1217,128 @@ export default function Providers({ children }) {
     [requireAuth, notify],
   );
 
+  const buyHeart = useCallback(async () => {
+    if (!requireAuth("buy a Heart")) return false;
+    try {
+      const res = await fetch("/api/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "buy-heart" }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        notify("Heart Purchase", data.error || "Could not buy Heart.", "danger");
+        return false;
+      }
+      setHearts(data.hearts);
+      setCoins(data.coins);
+      setEarnedCoins(data.earnedCoins);
+      setPurchasedCoins(data.purchasedCoins);
+      notify("Heart Stored", "1 Heart added to your vault. Permanent wealth immunity active.", "success");
+      return true;
+    } catch {
+      notify("Error", "Could not complete purchase.", "danger");
+      return false;
+    }
+  }, [requireAuth, notify]);
+
+  const payFineWithCoins = useCallback(async (fineId) => {
+    if (!requireAuth("pay fines")) return false;
+    try {
+      const res = await fetch("/api/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "pay-fine", payload: { fineId, method: "coins" } }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        notify("Fine Payment", data.error || "Could not pay fine.", "danger");
+        return false;
+      }
+      setFines((prev) => prev.map((f) => (f.id === fineId || f._id === fineId ? { ...f, status: "paid" } : f)));
+      setCoins(data.coins);
+      setEarnedCoins(data.earnedCoins);
+      setPurchasedCoins(data.purchasedCoins);
+      notify("Fine Settled", "50 coins paid. Account standing cleared.", "success");
+      return true;
+    } catch {
+      notify("Error", "Could not settle fine.", "danger");
+      return false;
+    }
+  }, [requireAuth, notify]);
+
+  const payFineWithHeart = useCallback(async (fineId) => {
+    if (!requireAuth("use a Heart")) return false;
+    try {
+      const res = await fetch("/api/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "pay-fine", payload: { fineId, method: "heart" } }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        notify("Heart Redemption", data.error || "Could not use Heart.", "danger");
+        return false;
+      }
+      setFines((prev) => prev.map((f) => (f.id === fineId || f._id === fineId ? { ...f, status: "waived", method: "heart" } : f)));
+      setHearts(data.hearts);
+      notify("Fine Waived", "1 Heart redeemed. Fine cleared without spending coins.", "success");
+      return true;
+    } catch {
+      notify("Error", "Could not redeem Heart.", "danger");
+      return false;
+    }
+  }, [requireAuth, notify]);
+
+  const toggleAutoPay = useCallback(async (enabled) => {
+    if (!requireAuth("change settings")) return false;
+    try {
+      const res = await fetch("/api/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "toggle-auto-pay", payload: { enabled } }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAutoPayFines(Boolean(data.autoPayFines));
+        notify(
+          "Setting Updated",
+          enabled ? "Fines will auto-pay at day rollover if coins are available." : "Fines will require manual review.",
+          "info",
+        );
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, [requireAuth, notify]);
+
+  const activatePhoenix = useCallback(async () => {
+    if (!requireAuth("activate Phoenix Fresh Start")) return false;
+    try {
+      const res = await fetch("/api/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "activate-phoenix" }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        notify("Phoenix Protocol", data.error || "Could not activate Fresh Start.", "danger");
+        return false;
+      }
+      setFines((prev) => prev.map((f) => ({ ...f, status: "waived" })));
+      setCoins(data.coins);
+      setEarnedCoins(data.earnedCoins);
+      setProbationUntil(data.probationUntil);
+      notify("Phoenix Activated", "Fresh start active! +25 starter coins granted and fines cleared.", "success");
+      return true;
+    } catch {
+      notify("Error", "Could not activate Phoenix.", "danger");
+      return false;
+    }
+  }, [requireAuth, notify]);
+
   const resetDemo = () => {
     setDays(normalizeDays(createInitialDays()));
     setCoins(ECONOMY.startingCoins);
@@ -1261,6 +1412,20 @@ export default function Providers({ children }) {
         isDueModalOpen,
         setIsDueModalOpen,
         updateDueTime,
+        hearts,
+        earnedCoins,
+        purchasedCoins,
+        autoPayFines,
+        lastPhoenixAt,
+        probationUntil,
+        todayTaskCoinsEarned,
+        buyHeart,
+        payFineWithCoins,
+        payFineWithHeart,
+        toggleAutoPay,
+        activatePhoenix,
+        isPhoenixModalOpen,
+        setIsPhoenixModalOpen,
         requireAuth,
         setShowAuthModal,
       }}
@@ -1270,6 +1435,10 @@ export default function Providers({ children }) {
       <DueTimeModal
         open={isDueModalOpen}
         onClose={() => setIsDueModalOpen(false)}
+      />
+      <PhoenixModal
+        open={isPhoenixModalOpen}
+        onClose={() => setIsPhoenixModalOpen(false)}
       />
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
+import GlobalFineBanner from "./GlobalFineBanner";
 import { useWorkspace } from "./Providers";
 
 const pageTitles = {
@@ -13,6 +14,7 @@ const pageTitles = {
   "/todo": "Todo",
   "/community": "Community",
   "/store": "Store",
+  "/guide": "Guide & Docs",
   "/profile": "Profile",
 };
 
@@ -23,6 +25,7 @@ const pageWidths = {
   "/todo": "max-w-4xl",
   "/community": "max-w-6xl",
   "/store": "max-w-4xl",
+  "/guide": "max-w-5xl",
   "/profile": "max-w-5xl",
 };
 
@@ -62,6 +65,8 @@ export default function AppShell({ children }) {
             title={pageTitles[pathname] ?? "PIZ-Todo"}
             onMenuClick={() => setSidebarOpen(true)}
           />
+
+          <GlobalFineBanner />
 
           <main className="flex-1 px-5 pb-12 pt-8 sm:px-8 lg:px-12 lg:pt-12">
             <div key={pathname}>{children}</div>

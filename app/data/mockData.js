@@ -25,6 +25,7 @@ export const mockNavItems = [
   { href: "/tasks", label: "Todo", icon: "tasks" },
   { href: "/community", label: "Community", icon: "community" },
   { href: "/store", label: "Store", icon: "store" },
+  { href: "/guide", label: "Guide", icon: "guide" },
   { href: "/profile", label: "Profile", icon: "profile" },
 ];
 
