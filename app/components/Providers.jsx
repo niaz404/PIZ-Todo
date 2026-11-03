@@ -193,6 +193,9 @@ export default function Providers({ children }) {
   const [historyMode, setHistoryMode] = useState("balanced");
   const [socialFocus, setSocialFocus] = useState("mixed");
   const [streak, setStreak] = useState(0);
+  const [userRole, setUserRole] = useState("member");
+  const [paymentRequests, setPaymentRequests] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [dueTime, setDueTime] = useState("6:00 AM");
   const [dueHour, setDueHour] = useState(6);
   const [dueTimeChangedAt, setDueTimeChangedAt] = useState(null);
@@ -303,6 +306,8 @@ export default function Providers({ children }) {
         if (typeof data.user.autoPayFines === "boolean") setAutoPayFines(data.user.autoPayFines);
         if (data.user.lastPhoenixAt) setLastPhoenixAt(data.user.lastPhoenixAt);
         if (data.user.probationUntil) setProbationUntil(data.user.probationUntil);
+        if (data.user.role) setUserRole(String(data.user.role).toLowerCase());
+        if (Array.isArray(data.paymentRequests)) setPaymentRequests(data.paymentRequests);
         if (data.user.dueTime) setDueTime(data.user.dueTime);
         if (typeof data.user.dueHour === "number") setDueHour(data.user.dueHour);
         if (data.user.dueTimeChangedAt) setDueTimeChangedAt(data.user.dueTimeChangedAt);
@@ -359,7 +364,7 @@ export default function Providers({ children }) {
     }
 
     loadBackendWorkspace();
-  }, [session?.user]);
+  }, [session?.user, refreshKey]);
 
   // Persist strictly to user-scoped local storage
   useEffect(() => {
@@ -1339,6 +1344,8 @@ export default function Providers({ children }) {
     }
   }, [requireAuth, notify]);
 
+  const refreshWorkspace = useCallback(() => setRefreshKey((k) => k + 1), []);
+
   const resetDemo = () => {
     setDays(normalizeDays(createInitialDays()));
     setCoins(ECONOMY.startingCoins);
@@ -1426,6 +1433,10 @@ export default function Providers({ children }) {
         activatePhoenix,
         isPhoenixModalOpen,
         setIsPhoenixModalOpen,
+        userRole,
+        isStaff: ["owner", "admin", "moderator"].includes(userRole?.toLowerCase()),
+        paymentRequests,
+        refreshWorkspace,
         requireAuth,
         setShowAuthModal,
       }}

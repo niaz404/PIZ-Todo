@@ -26,6 +26,12 @@ export const ECONOMY = {
   phoenixStarterCoins: 25,
 };
 
+export const BKASH_CONFIG = {
+  number: "01902954519",
+  type: "Personal (Send Money)",
+  recipient: "PIZ-Todo Official Treasury",
+};
+
 export const COIN_PACKS = [
   {
     id: "coins-20",

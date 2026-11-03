@@ -15,6 +15,7 @@ const pageTitles = {
   "/community": "Community",
   "/store": "Store",
   "/guide": "Guide & Docs",
+  "/manage": "Management Desk",
   "/profile": "Profile",
 };
 
@@ -26,6 +27,7 @@ const pageWidths = {
   "/community": "max-w-6xl",
   "/store": "max-w-4xl",
   "/guide": "max-w-5xl",
+  "/manage": "max-w-6xl",
   "/profile": "max-w-5xl",
 };
 

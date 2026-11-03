@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import {
   AlertTriangle,
+  ArrowRight,
   Check,
+  Clock,
   Coins,
+  Copy,
   Heart,
   Lock,
   Shield,
@@ -11,8 +15,9 @@ import {
   Zap,
 } from "../components/icons";
 import { useWorkspace } from "../components/Providers";
-import { COIN_PACKS, ECONOMY } from "../lib/economy";
+import { BKASH_CONFIG, COIN_PACKS, ECONOMY } from "../lib/economy";
 import { formatCoins } from "../lib/utils";
+import BkashPaymentModal from "../components/BkashPaymentModal";
 
 export default function StorePage() {
   const {
@@ -28,7 +33,12 @@ export default function StorePage() {
     totalOutstanding,
     isLocked,
     notify,
+    requireAuth,
+    paymentRequests,
+    refreshWorkspace,
   } = useWorkspace();
+
+  const [selectedBkashPack, setSelectedBkashPack] = useState(null);
 
   const canPayOne = coins >= ECONOMY.finePerMissedTask;
   const payableNow = Math.min(
@@ -223,45 +233,49 @@ export default function StorePage() {
         </div>
       </section>
 
-      {/* Production Notice: Direct Payment Gateway Coming Soon */}
-      <div className="neu-inset-soft rounded-[24px] p-5 border border-accent/20 bg-accent/[0.03] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Production Notice: Manual bKash Top-Up Now Live */}
+      <div className="neu-inset-soft rounded-[24px] p-5 border border-rose-500/25 bg-rose-500/[0.03] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3.5">
-          <span className="neu-button grid size-10 shrink-0 place-items-center rounded-2xl text-accent">
-            <Sparkles className="size-4" />
+          <span className="neu-button grid size-10 shrink-0 place-items-center rounded-2xl text-rose-400">
+            <Coins className="size-5" />
           </span>
           <div>
-            <span className="rounded bg-accent/20 px-2 py-0.5 text-[8.5px] font-semibold uppercase tracking-[0.14em] text-accent">
-              Coming Soon
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="rounded bg-rose-500/20 px-2 py-0.5 text-[8.5px] font-semibold uppercase tracking-[0.14em] text-rose-300">
+                bKash Manual Top-Up Live
+              </span>
+              <span className="text-[10px] text-faint">
+                {BKASH_CONFIG.number} (Personal)
+              </span>
+            </div>
             <h2 className="mt-1.5 text-sm font-semibold text-ink">
-              Direct Payment Gateway & Top-Up Integration
+              Direct Coin Purchases via bKash Send Money
             </h2>
             <p className="mt-1 text-xs text-muted leading-relaxed max-w-2xl">
-              Official payment options (bKash, Nagad, and Cards) are currently being integrated for safe transactions.
-              In the meantime, the economy remains secure: coins can only be earned by completing your real daily tasks!
+              Choose any coin package below to send money via bKash and submit your TrxID. Our management team verifies requests and credits purchased coins directly to your balance.
             </p>
           </div>
         </div>
 
-        <span className="neu-button shrink-0 rounded-xl px-3.5 py-2 text-xs font-semibold text-faint self-start sm:self-auto cursor-not-allowed">
-          In Development
+        <span className="neu-soft shrink-0 rounded-xl px-3.5 py-2 text-xs font-semibold text-rose-300 self-start sm:self-auto border border-rose-500/20">
+          Official Treasury Active
         </span>
       </div>
 
-      {/* Top-up Packages (Preview Mode) */}
+      {/* Top-up Packages */}
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3 px-1">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
-              Packages Preview
+              Instant Top-Up
             </p>
             <h2 className="mt-1 font-display text-2xl font-normal tracking-[-0.015em] text-ink">
               Coin Packages
             </h2>
           </div>
-          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-faint/80">
-            <Lock className="size-3 text-accent" />
-            Purchases locked until gateway launch
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-accent">
+            <Sparkles className="size-3 text-accent" />
+            Purchased coins are 100% exempt from weekend decay
           </span>
         </div>
 
@@ -313,17 +327,97 @@ export default function StorePage() {
 
                 <button
                   type="button"
-                  onClick={() => handleComingSoon(pack)}
-                  className="neu-button inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-semibold text-muted hover:text-accent transition-colors"
+                  onClick={() => {
+                    if (!requireAuth("purchase coins")) return;
+                    setSelectedBkashPack(pack);
+                  }}
+                  className="neu-accent inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-semibold text-[#17130c] hover:scale-[1.02] transition-all"
                 >
-                  <Lock className="size-3 text-accent" />
-                  <span>Coming Soon</span>
+                  <Coins className="size-3.5" />
+                  <span>Buy with bKash</span>
                 </button>
               </div>
             </article>
           ))}
         </div>
       </section>
+
+      {/* My Submitted Top-Up Requests */}
+      {paymentRequests && paymentRequests.length > 0 && (
+        <section className="neu rounded-[28px] p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-faint">
+                Order History
+              </p>
+              <h2 className="mt-1 font-display text-xl font-normal text-ink">
+                My bKash Payment Requests
+              </h2>
+            </div>
+            <span className="text-xs text-muted">
+              {paymentRequests.length} request{paymentRequests.length === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          <div className="divide-y divide-white/[0.05] overflow-x-auto">
+            {paymentRequests.map((req) => (
+              <div
+                key={req.id || req._id}
+                className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-ink">{req.packLabel}</span>
+                    <span className="text-faint">·</span>
+                    <span className="text-accent font-medium">+{formatCoins(req.grantedCoins ?? req.requestedCoins)} coins</span>
+                    <span className="text-faint">({req.tk} Tk)</span>
+                  </div>
+                  <p className="text-[11px] text-muted mt-0.5 font-mono">
+                    TrxID: <span className="text-ink uppercase">{req.trxId}</span> · From: {req.bkashNumber}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className={`rounded-lg px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${
+                      req.status === "approved"
+                        ? "bg-success/15 text-success border border-success/30"
+                        : req.status === "rejected"
+                          ? "bg-danger/15 text-danger border border-danger/30"
+                          : "bg-warning/15 text-warning border border-warning/30"
+                    }`}
+                  >
+                    {req.status}
+                  </span>
+                  <span className="text-[10px] text-faint">
+                    {new Date(req.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* bKash Payment Modal */}
+      {selectedBkashPack && (
+        <BkashPaymentModal
+          open={Boolean(selectedBkashPack)}
+          pack={selectedBkashPack}
+          onClose={() => setSelectedBkashPack(null)}
+          onSuccess={(req) => {
+            notify(
+              "Payment Request Submitted",
+              `We received your request for ${req.packLabel} (TrxID: ${req.trxId}). Once verified, coins will be credited.`,
+              "success",
+            );
+            refreshWorkspace?.();
+          }}
+        />
+      )}
     </div>
   );
 }

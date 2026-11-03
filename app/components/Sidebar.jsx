@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Settings,
+  Shield,
   Store,
   User,
   Users,
@@ -15,6 +16,7 @@ import {
 } from "./icons";
 import { mockNavItems } from "../data/mockData";
 import { useSession, authClient } from "@/lib/auth-client";
+import { useWorkspace } from "./Providers";
 
 const navIcons = {
   dashboard: LayoutDashboard,
@@ -22,6 +24,7 @@ const navIcons = {
   community: Users,
   store: Store,
   guide: BookOpen,
+  manage: Shield,
   profile: User,
   settings: Settings,
 };
@@ -29,9 +32,13 @@ const navIcons = {
 export default function Sidebar({ pendingTasks, open, onClose }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { isStaff } = useWorkspace();
   const isAuthenticated = Boolean(session?.user);
 
-  const navItems = mockNavItems;
+  const navItems = [
+    ...mockNavItems,
+    ...(isStaff ? [{ href: "/manage", label: "Manage", icon: "manage" }] : []),
+  ];
 
   const handleSignIn = () => {
     authClient.signIn.social({

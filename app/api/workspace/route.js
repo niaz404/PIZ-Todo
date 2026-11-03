@@ -108,6 +108,20 @@ export async function GET(request) {
     const purchasedCoins = userDoc?.purchasedCoins ?? 0;
     const totalCoins = earnedCoins + purchasedCoins;
 
+    const rawUserRequests = await db
+      .collection("coin_requests")
+      .find({ userId: idStr })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+
+    const paymentRequests = rawUserRequests.map((r) => ({
+      ...r,
+      id: r._id.toString(),
+    }));
+
+    const userRole = userDoc?.role || (user.email === "nuddintanim@gmail.com" ? "owner" : "member");
+
     return NextResponse.json({
       user: {
         id: idStr,
@@ -121,7 +135,7 @@ export async function GET(request) {
           .join("")
           .toUpperCase()
           .slice(0, 3),
-        role: userDoc?.role || "Member",
+        role: userRole,
         bio: userDoc?.bio || "",
         preferences: userDoc?.preferences || {
           digest: true,
@@ -149,6 +163,7 @@ export async function GET(request) {
       tasks: tasks.map((t) => ({ ...t, id: t._id.toString() })),
       fines: fines.map((f) => ({ ...f, id: f._id.toString() })),
       transactions: transactions.map((tx) => ({ ...tx, id: tx._id.toString() })),
+      paymentRequests,
     });
   } catch (err) {
     console.error("Workspace GET error:", err);
@@ -603,6 +618,52 @@ export async function POST(request) {
       }
 
       return NextResponse.json({ success: true, createdFines: newFines.length });
+    }
+
+    // 6. Submit Manual bKash Payment Request
+    if (action === "submit-payment-request") {
+      const { packId, coins, tk, packLabel, bkashNumber, senderName, trxId, note } = payload || {};
+      if (!packId || !coins || !tk || !bkashNumber || !senderName || !trxId) {
+        return NextResponse.json(
+          { error: "Sender bKash number, Sender Name, and Transaction ID (TrxID) are required." },
+          { status: 400 },
+        );
+      }
+
+      const cleanTrx = String(trxId).trim().toUpperCase();
+      const existingTrx = await db.collection("coin_requests").findOne({ trxId: cleanTrx });
+      if (existingTrx) {
+        return NextResponse.json(
+          { error: "This Transaction ID (TrxID) has already been submitted." },
+          { status: 400 },
+        );
+      }
+
+      const nowIso = new Date().toISOString();
+      const newRequest = {
+        userId: idStr,
+        userEmail: user.email,
+        userName: userDoc?.name || user.name || "Member",
+        userImage: userDoc?.image || user.image || null,
+        packId: String(packId),
+        packLabel: String(packLabel || `${coins} Coins Pack`),
+        requestedCoins: Number(coins),
+        tk: Number(tk),
+        bkashNumber: String(bkashNumber).trim(),
+        senderName: String(senderName).trim(),
+        trxId: cleanTrx,
+        note: note ? String(note).trim() : "",
+        status: "pending",
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      };
+
+      const insertResult = await db.collection("coin_requests").insertOne(newRequest);
+      return NextResponse.json({
+        success: true,
+        message: "Payment request submitted. Our team will verify and credit your coins shortly.",
+        request: { ...newRequest, id: insertResult.insertedId.toString() },
+      });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
