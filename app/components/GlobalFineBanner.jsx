@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Coins, Heart } from "./icons";
 import { useWorkspace } from "./Providers";
+import { ECONOMY } from "../lib/economy";
 import { formatCoins } from "../lib/utils";
 
 export default function GlobalFineBanner() {
@@ -53,14 +54,14 @@ export default function GlobalFineBanner() {
             </button>
           )}
 
-          {firstFine && coins >= 50 && (
+          {firstFine && coins >= (firstFine.amount || ECONOMY.finePerMissedTask || 45) && (
             <button
               type="button"
               onClick={() => payFineWithCoins(firstFine.id)}
               className="neu-button inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold text-ink hover:text-accent transition-all"
             >
               <Coins className="size-3 text-accent" />
-              <span>Pay 50 Coins</span>
+              <span>Pay {firstFine.amount || ECONOMY.finePerMissedTask || 45} Coins</span>
             </button>
           )}
 

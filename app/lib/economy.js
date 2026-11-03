@@ -8,22 +8,22 @@ import { addDays, dateFromKey, formatShortDate, getDateKey } from "./utils";
 export const ECONOMY = {
   coinPerTk: 1,
   startingCoins: 0,
-  defaultTaskReward: 25,
-  dailyMaxTaskCoins: 150,
-  finePerMissedTask: 50,
+  defaultTaskReward: 15,
+  dailyMaxTaskCoins: 60,
+  finePerMissedTask: 45,
   taskEditCost: 2,
   subtaskEditCost: 0,
   deleteOpenTaskCost: 5,
   deleteDoneTaskCost: 5,
   taskDeleteCost: 5,
   deleteSubtaskCost: 0,
-  heartCost: 80,
+  heartCost: 75,
   maxHearts: 3,
-  streakRewardBonus: 50,
+  streakRewardBonus: 30,
   streakInterval: 3,
   maxUnpaidFines: 4,
   phoenixCooldownDays: 30,
-  phoenixStarterCoins: 25,
+  phoenixStarterCoins: 20,
 };
 
 export const BKASH_CONFIG = {
@@ -34,25 +34,25 @@ export const BKASH_CONFIG = {
 
 export const COIN_PACKS = [
   {
-    id: "coins-20",
-    coins: 20,
-    tk: 20,
+    id: "coins-25",
+    coins: 25,
+    tk: 25,
     label: "Small top-up",
-    note: "A little breathing room",
+    note: "Quick coin boost",
   },
   {
     id: "coins-50",
     coins: 50,
     tk: 50,
     label: "Quick rescue",
-    note: "Half a missed-task fine",
+    note: "Clears one missed task fine",
   },
   {
     id: "coins-100",
     coins: 100,
     tk: 100,
     label: "Fine shield",
-    note: "Clears one missed task",
+    note: "Clears two fines or funds a Heart",
     featured: true,
   },
   {
@@ -60,7 +60,7 @@ export const COIN_PACKS = [
     coins: 200,
     tk: 200,
     label: "Recovery pack",
-    note: "Clears two missed tasks",
+    note: "Deep fine shield & emergency wealth",
   },
   {
     id: "coins-500",
@@ -221,7 +221,14 @@ function getDaysInMonth(year, monthIdx) {
   return daysMap[monthIdx] ?? 30;
 }
 
-export function buildMonthHistory({ days, fines, transactions, todayKey = "2026-11-01" }) {
+export function buildMonthHistory({
+  days,
+  fines,
+  transactions,
+  todayKey = "2026-11-01",
+  historyByDate = {},
+  completedDates = [],
+}) {
   const parts = todayKey.split("-");
   const currentYear = Number(parts[0]) || 2026;
   const monthNum = Number(parts[1]) || 11;
@@ -229,6 +236,7 @@ export function buildMonthHistory({ days, fines, transactions, todayKey = "2026-
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const daysByDate = new Map((days || []).map((day) => [day.date, day]));
   const monthName = MONTH_NAMES[currentMonth] || "Nov";
+  const persistentSet = new Set(Array.isArray(completedDates) ? completedDates : []);
 
   return Array.from({ length: daysInMonth }, (_, index) => {
     const dayNum = index + 1;
@@ -237,24 +245,38 @@ export function buildMonthHistory({ days, fines, transactions, todayKey = "2026-
     const d = String(dayNum).padStart(2, "0");
     const dateKey = `${y}-${m}-${d}`;
     const day = daysByDate.get(dateKey);
+    const persistentHistory = historyByDate[dateKey];
 
     const doneTasks = (day?.tasks || []).filter((task) => task.done);
     const openTasks = (day?.tasks || []).filter((task) => !task.done);
-    const earned = doneTasks.reduce(
-      (sum, task) => sum + (Number(task.reward) || 0),
-      0,
+
+    const completed = Math.max(
+      doneTasks.length,
+      persistentHistory?.completed ?? (persistentSet.has(dateKey) ? 1 : 0),
     );
+
+    const txEarned = (transactions || [])
+      .filter((tx) => tx.date === dateKey && (tx.type === "task-reward" || tx.type === "earn"))
+      .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+    const earned = Math.max(
+      doneTasks.reduce((sum, task) => sum + (Number(task.reward) || 0), 0),
+      persistentHistory?.earned ?? txEarned,
+    );
+
     const fined = (fines || [])
       .filter((fine) => fine.dayId === dateKey)
       .reduce((sum, fine) => sum + (Number(fine.amount) || 0), 0);
+
     const spent = (transactions || [])
       .filter(
         (entry) =>
           entry.date === dateKey &&
-          ["edit", "delete", "reward"].includes(entry.type),
+          ["edit", "delete", "reward", "task-edit", "task-delete"].includes(entry.type),
       )
       .reduce((sum, entry) => sum + Math.abs(Number(entry.amount) || 0), 0);
-    const total = doneTasks.length + openTasks.length;
+
+    const total = completed + openTasks.length;
 
     return {
       date: dateKey,
@@ -264,26 +286,27 @@ export function buildMonthHistory({ days, fines, transactions, todayKey = "2026-
       earned,
       fined,
       spent,
-      completed: doneTasks.length,
+      completed,
       missed: openTasks.length,
-      rate: total ? Math.round((doneTasks.length / total) * 100) : 0,
+      rate: total ? Math.round((completed / total) * 100) : 0,
       isToday: dateKey === todayKey,
       isFuture: dateKey > todayKey,
     };
   });
 }
 
-export function calculateMonthlyStreak(days, todayKey = "2026-11-01") {
+export function calculateMonthlyStreak(days, todayKey = "2026-11-01", completedDates = []) {
   const parts = todayKey.split("-");
   const currentYear = Number(parts[0]) || 2026;
   const monthNum = Number(parts[1]) || 11;
   const todayDateNum = Number(parts[2]) || 1;
   const daysByDate = new Map((days || []).map((day) => [day.date, day]));
+  const persistentSet = new Set(Array.isArray(completedDates) ? completedDates : []);
 
   const y = currentYear;
   const m = String(monthNum).padStart(2, "0");
   const todayDay = daysByDate.get(todayKey);
-  const todayDone = (todayDay?.tasks || []).some((t) => t.done);
+  const todayDone = (todayDay?.tasks || []).some((t) => t.done) || persistentSet.has(todayKey);
 
   let streak = 0;
   let checkDayNum = todayDone ? todayDateNum : todayDateNum - 1;
@@ -291,7 +314,7 @@ export function calculateMonthlyStreak(days, todayKey = "2026-11-01") {
   while (checkDayNum >= 1) {
     const key = `${y}-${m}-${String(checkDayNum).padStart(2, "0")}`;
     const day = daysByDate.get(key);
-    const hasCompleted = (day?.tasks || []).some((t) => t.done);
+    const hasCompleted = (day?.tasks || []).some((t) => t.done) || persistentSet.has(key);
     if (hasCompleted) {
       streak += 1;
       checkDayNum -= 1;
@@ -302,68 +325,6 @@ export function calculateMonthlyStreak(days, todayKey = "2026-11-01") {
 
   return streak;
 }
-
-export const TEAM_PEERS = [
-  {
-    id: "maya",
-    name: "Maya Chen",
-    initials: "MC",
-    role: "Design",
-    completed: 34,
-    streak: 21,
-    fines: 0,
-    status: "on-fire",
-    praise:
-      "Maya is on a 21-day tear. 34 tasks this week, zero fines. The rest of us are just living in her shadow.",
-  },
-  {
-    id: "noah",
-    name: "Noah Kim",
-    initials: "NK",
-    role: "Engineering",
-    completed: 31,
-    streak: 14,
-    fines: 0,
-    status: "on-fire",
-    praise:
-      "Noah cleared 31 tasks and kept a 14-day streak. Annoyingly consistent. Genuinely impressive.",
-  },
-  {
-    id: "priya",
-    name: "Priya Shah",
-    initials: "PS",
-    role: "Writing",
-    completed: 22,
-    streak: 8,
-    fines: 1,
-    status: "steady",
-    praise: "Priya is quietly stacking good days. One small slip, no drama.",
-  },
-  {
-    id: "sam",
-    name: "Sam Ortiz",
-    initials: "SO",
-    role: "Community",
-    completed: 12,
-    streak: 2,
-    fines: 3,
-    status: "at-risk",
-    roast:
-      "Sam is treating fines like a subscription. Three unpaid slips and the todo list is still 'in progress'.",
-  },
-  {
-    id: "leo",
-    name: "Leo Park",
-    initials: "LP",
-    role: "Planning",
-    completed: 6,
-    streak: 0,
-    fines: 4,
-    status: "locked",
-    roast:
-      "Leo has been planning to start since Tuesday. The list is not a vision board. Four fines and a timeout.",
-  },
-];
 
 export const DEMO_SCENARIOS = [
   {

@@ -19,51 +19,52 @@ import {
   TrendingUp,
   Zap,
 } from "../components/icons";
-import { ECONOMY } from "../lib/economy";
+import { BKASH_CONFIG, ECONOMY } from "../lib/economy";
 import { formatCoins } from "../lib/utils";
 
 const SECTIONS = [
-  { id: "overview", label: "Economy Overview" },
-  { id: "subtasks", label: "Subtasks System" },
-  { id: "fines", label: "Missed Tasks & Fines" },
-  { id: "cheat-prevention", label: "Integrity & Anti-Cheat" },
-  { id: "hearts", label: "Heart Vault" },
-  { id: "phoenix", label: "Phoenix Protocol" },
-  { id: "faq", label: "Frequently Asked Questions" },
+  { id: "overview", label: "⚡ 60-Sec Overview" },
+  { id: "subtasks", label: "🎯 Subtasks Magic" },
+  { id: "fines", label: "⏰ Missed Tasks & Fines" },
+  { id: "cheat-prevention", label: "🛡️ Anti-Cheat Friction" },
+  { id: "hearts", label: "💖 Heart Vault" },
+  { id: "storage", label: "🧹 Storage & 3-Day Purge" },
+  { id: "phoenix", label: "🔥 Phoenix Protocol" },
+  { id: "faq", label: "❓ Interactive FAQ" },
 ];
 
 const FAQS = [
   {
-    q: "Why is there a 150-coin daily reward cap on task completions?",
-    a: "The 150-coin cap (equivalent to 6 completed tasks per day at +25 coins each) ensures that members focus on high-impact daily priorities rather than bot-farming or spamming hundreds of micro-tasks. You can still create and complete as many tasks as you need for organization—only the reward stops at 150 coins per day.",
+    q: "Why is there a 60-coin daily reward cap on task completions?",
+    a: "Quality over spam! At +15 coins per finished task, 60 coins equals 4 meaningful, completed priorities every single day. You can still add and organize 20 or 50 tasks and subtasks for your schedule—only the coin reward stops at 60 so nobody can write a script to farm infinite coins.",
   },
   {
-    q: "Do subtasks cost coins to edit or delete?",
-    a: "Never. Subtasks are 100% free to add, modify, reorder, check off, and delete. They serve as stepping stones for your main tasks. However, a parent task cannot be marked completed for coins until all its subtasks are finished.",
+    q: "Do subtasks cost coins to create, edit, or delete?",
+    a: "Zero. Nada. Free! Subtasks are your personal stepping stones. Break a complex task into 3, 5, or 10 subtasks with total peace of mind. The only rule: you cannot claim the +15 coin reward on the parent task until all child subtasks are checked off.",
   },
   {
-    q: "Why do editing and deleting tasks cost 2 and 5 coins?",
-    a: "This provides deliberate psychological friction against cheating. In typical todo apps, users delete or rename difficult tasks to avoid acknowledging missed deadlines. The confirmation modal and modest coin fee encourage honest commitment.",
+    q: "Why does editing or deleting a task cost 2 and 5 coins?",
+    a: "We’ve all been there: 10 minutes before the deadline, you're tempted to rename 'Finish 20-page thesis' to 'Breathe air' or delete it to escape accountability. The 2-coin and 5-coin friction modals make you stop, think, and stay committed to your word.",
   },
   {
     q: "What happens if I miss my daily cutoff time?",
-    a: "When the daily cutoff passes and a scheduled task remains uncompleted, an unpaid fine of 50 coins is generated. An alert banner appears across the app allowing you to either pay 50 coins or use 1 Heart to waive the fine.",
+    a: "At your cutoff time (default: 6:00 AM), any open task triggers a 45-coin fine. A persistent banner reminds you to settle it. One missed task wipes out 3 completed tasks, keeping stakes genuinely high!",
   },
   {
-    q: "What is a Heart and why does it cost 80 coins?",
-    a: "A Heart is a permanent wealth store and insurance policy. While earned coins are subject to weekend anti-hoarding decay, Hearts never decay. Each Heart can cancel 1 missed task fine (worth 50 coins). Storing up to 3 Hearts in your vault protects you from unforeseen emergencies.",
+    q: "Why would I buy a Heart for 75 coins when a fine is 45 coins?",
+    a: "Because Hearts are permanent wealth insurance! Every weekend, active earned coins undergo anti-hoarding decay (5% - 20%). Hearts NEVER decay. Vaulting up to 3 Hearts locks your wealth safely and gives you instant emergency shields when life gets crazy.",
   },
   {
-    q: "Will weekend anti-hoarding decay affect coins I purchased with real money?",
-    a: "No. Purchased coins are strictly separated from earned coins in your database record and are 100% exempt from weekly weekend decay. The decay only affects active task-earned coins to motivate continuous real-world execution.",
+    q: "Are coins bought with real money via bKash safe from weekly decay?",
+    a: "100% exempt! Purchased coins live in a separate protected vault. When you spend coins, the system always uses your earned coins first. Purchased coins stay untouched and immune to weekly decay.",
   },
   {
-    q: "What is the Phoenix Protocol and when can I use it?",
-    a: "The Phoenix Protocol is a comeback engine for members who hit hard times and accumulated 3 or more unpaid fines. Available once every 30 days, it completely clears your debt, grants +25 starter coins, and sets a 3-day probation period so you can restart with zero baggage.",
+    q: "What is the 3-day finished task cleanup?",
+    a: "To keep our free database blazing fast, finished tasks automatically retire 3 days after completion. But your dashboard stats, lifetime completed counter, monthly heatmap, and streaks are pre-calculated and stored permanently on your account forever!",
   },
   {
-    q: "Can I automate paying fines so my workflow is uninterrupted?",
-    a: "Yes. By default, fine payments require manual confirmation. However, you can toggle 'Auto-Pay Fines' on your Profile page. When active, overdue fines are automatically settled at cutoff using available coins or Hearts.",
+    q: "What if I get sick or fall into deep debt? Am I stuck forever?",
+    a: "Never. The Phoenix Protocol is our comeback engine. If you accumulate 3+ unpaid fines and haven't used the protocol in the past 30 days, one click wipes all your debt, grants +20 starter coins, and sets a 3-day probation so you can start fresh.",
   },
 ];
 
@@ -82,13 +83,13 @@ export default function GuidePage() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 border border-accent/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
             <BookOpen className="size-3" />
-            Official Documentation
+            Official Manual & Economy Lore
           </div>
           <h1 className="mt-3 font-display text-4xl font-normal tracking-[-0.015em] text-ink sm:text-5xl">
-            Economy & <span className="italic text-accent">Accountability Guide.</span>
+            How PIZ-Todo <span className="italic text-accent">Actually Works.</span>
           </h1>
           <p className="mt-2 max-w-2xl text-xs sm:text-sm text-muted leading-relaxed">
-            Everything you need to know about PIZ-Todo tokenomics, anti-cheat mechanisms, subtask integrity, Heart vaults, and recovery protocols.
+            Where to-do lists meet real-world discipline, tight tokenomics, and thoughtful accountability. Read the rules, play fair, and build unshakeable consistency.
           </p>
         </div>
 
@@ -96,7 +97,7 @@ export default function GuidePage() {
           href="/tasks"
           className="neu-button inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl px-4 py-2.5 text-xs font-semibold text-accent hover:text-accent-strong shrink-0"
         >
-          <span>Open My Todos</span>
+          <span>Jump into Tasks</span>
           <ArrowRight className="size-3.5" />
         </Link>
       </header>
@@ -133,10 +134,10 @@ export default function GuidePage() {
               </span>
               <div>
                 <h2 className="font-display text-2xl font-normal text-ink">
-                  Core Tokenomics & Daily Rewards
+                  The Golden Rules in 60 Seconds
                 </h2>
                 <p className="text-xs text-muted">
-                  How coins are minted, capped, and accumulated responsibly.
+                  The economy is intentionally disciplined: keeping promises pays; breaking them hurts.
                 </p>
               </div>
             </div>
@@ -144,14 +145,14 @@ export default function GuidePage() {
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="neu-soft rounded-2xl p-5 border border-white/[0.04]">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-accent font-semibold">
-                  Task Completion
+                  Task Completed on Time
                 </p>
                 <p className="mt-2 text-3xl font-bold text-ink">
-                  +{ECONOMY.defaultTaskReward || 25}{" "}
+                  +{ECONOMY.defaultTaskReward || 15}{" "}
                   <span className="text-sm font-normal text-faint">Coins</span>
                 </p>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  Granted immediately upon completing any parent task before your cutoff time.
+                  Earned for finishing your daily parent task before the cutoff time.
                 </p>
               </div>
 
@@ -160,23 +161,24 @@ export default function GuidePage() {
                   Daily Reward Cap
                 </p>
                 <p className="mt-2 text-3xl font-bold text-ink">
-                  {ECONOMY.dailyMaxTaskCoins || 150}{" "}
+                  {ECONOMY.dailyMaxTaskCoins || 60}{" "}
                   <span className="text-sm font-normal text-faint">Coins / Day</span>
                 </p>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  Caps daily task rewards (6 tasks) to eliminate script farming while keeping your workflow clean.
+                  Caps rewards to 4 core tasks per day. You can still create unlimited tasks for scheduling!
                 </p>
               </div>
 
               <div className="neu-soft rounded-2xl p-5 border border-white/[0.04]">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-accent font-semibold">
-                  Streak Milestone
+                  3-Day Streak Bonus
                 </p>
-                <p className="mt-2 text-3xl font-bold text-ink">
-                  +50 <span className="text-sm font-normal text-faint">Bonus Coins</span>
+                <p className="mt-2 text-3xl font-bold text-accent">
+                  +{ECONOMY.streakRewardBonus || 30}{" "}
+                  <span className="text-sm font-normal text-faint">Coins</span>
                 </p>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  Earned every 3 consecutive days you maintain flawless on-time task completion.
+                  Every 3 consecutive days you maintain momentum, a +30 coin milestone reward is auto-credited.
                 </p>
               </div>
             </div>
@@ -192,40 +194,33 @@ export default function GuidePage() {
               </span>
               <div>
                 <h2 className="font-display text-2xl font-normal text-ink">
-                  The Subtask Architecture
+                  The Subtask Superpower
                 </h2>
                 <p className="text-xs text-muted">
-                  Stepping stones designed to empower granular planning with zero friction.
+                  Break big mountains into pebbles with zero friction.
                 </p>
               </div>
             </div>
 
-            <div className="space-y-4 text-xs sm:text-sm text-muted leading-relaxed">
-              <div className="neu-inset-soft rounded-2xl p-5 border border-white/[0.04]">
-                <h3 className="font-semibold text-ink text-sm">100% Free & Unlimited</h3>
-                <p className="mt-1">
-                  Subtasks never incur edit or delete penalties. You can break down complex projects into 5, 10, or 20 individual steps without spending a single coin.
+            <div className="grid gap-4 sm:grid-cols-2 text-xs sm:text-sm text-muted leading-relaxed">
+              <div className="neu-inset-soft rounded-2xl p-5 border border-white/[0.04] space-y-2">
+                <h3 className="font-semibold text-ink text-sm">100% Free & Unlimited Forever</h3>
+                <p>
+                  Subtasks never cost coins. Add 3, 5, or 15 subtasks to any task. Edit, reorder, check off, or delete subtasks without any confirmation fee.
                 </p>
               </div>
 
-              <div className="neu-inset-soft rounded-2xl p-5 border border-white/[0.04]">
+              <div className="neu-inset-soft rounded-2xl p-5 border border-white/[0.04] space-y-2">
                 <h3 className="font-semibold text-ink text-sm">Parent Completion Gate</h3>
-                <p className="mt-1">
-                  To prevent gaming the reward system, a parent task cannot be checked off for +25 coins until all of its child subtasks are marked 100% finished.
-                </p>
-              </div>
-
-              <div className="neu-inset-soft rounded-2xl p-5 border border-white/[0.04]">
-                <h3 className="font-semibold text-ink text-sm">Zero Fine Exposure for Subtasks</h3>
-                <p className="mt-1">
-                  Only parent tasks generate missed deadline fines. Subtasks remain strictly safe stepping stones that reflect your personal breakdown style.
+                <p>
+                  You cannot claim the +15 coin reward on a parent task until ALL of its subtasks are checked off. This stops you from taking credit before the work is done.
                 </p>
               </div>
             </div>
           </section>
         )}
 
-        {/* SECTION 3: FINES & CUTOFF */}
+        {/* SECTION 3: FINES */}
         {(activeTab === "fines" || activeTab === "all") && (
           <section className="neu rounded-[28px] p-6 sm:p-8 space-y-6">
             <div className="flex items-center gap-3">
@@ -234,43 +229,44 @@ export default function GuidePage() {
               </span>
               <div>
                 <h2 className="font-display text-2xl font-normal text-ink">
-                  Missed Tasks & Fine Accountability
+                  Missed Tasks & Cutoff Fines
                 </h2>
                 <p className="text-xs text-muted">
-                  Real discipline requires stakes. Incomplete tasks trigger automated accountability.
+                  Promises require stakes. Missing deadlines triggers real accountability.
                 </p>
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="neu-soft rounded-2xl p-5">
+              <div className="neu-soft rounded-2xl p-5 border border-warning/20 bg-warning/[0.03]">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-warning font-semibold">
-                  Missed Cutoff Fine
+                  Missed Task Fine
                 </p>
                 <p className="mt-2 text-3xl font-bold text-ink">
-                  -50 <span className="text-sm font-normal text-faint">Coins</span>
+                  -{ECONOMY.finePerMissedTask || 45}{" "}
+                  <span className="text-sm font-normal text-faint">Coins</span>
                 </p>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  Generated at your chosen daily cutoff time for every task left open. Fines remain as unpaid alerts until settled.
+                  When your cutoff hour arrives (default: 6:00 AM), every uncompleted task generates an unpaid fine of 45 coins. Missing 1 task wipes out 3 completed tasks!
                 </p>
               </div>
 
-              <div className="neu-soft rounded-2xl p-5">
+              <div className="neu-soft rounded-2xl p-5 border border-accent/20 space-y-3">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-accent font-semibold">
-                  Settlement Options
+                  How to Settle Fines
                 </p>
-                <div className="mt-3 space-y-2 text-xs text-muted">
+                <div className="space-y-2 text-xs text-muted">
                   <div className="flex items-center gap-2">
                     <span className="size-1.5 rounded-full bg-accent" />
-                    <span>Pay with 50 earned coins at Store or via banner</span>
+                    <span><strong>Pay with Coins:</strong> Settle via the persistent top banner or Fine Desk in Store.</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="size-1.5 rounded-full bg-rose-400" />
-                    <span>Waive completely using 1 vaulted Heart</span>
+                    <span><strong>Use 1 Heart:</strong> Instantly cancel 1 fine without spending coins.</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="size-1.5 rounded-full bg-ink" />
-                    <span>Enable Auto-Pay in Profile for hands-free settling</span>
+                    <span><strong>Auto-Pay:</strong> Toggle on in Profile to clear fines automatically at rollover.</span>
                   </div>
                 </div>
               </div>
@@ -290,7 +286,7 @@ export default function GuidePage() {
                   Integrity & Anti-Cheat Friction
                 </h2>
                 <p className="text-xs text-muted">
-                  Psychological barriers against impulsive task modifications.
+                  Psychological barriers stopping you from cheating yourself.
                 </p>
               </div>
             </div>
@@ -300,11 +296,11 @@ export default function GuidePage() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-ink text-sm">Editing Parent Tasks</h3>
                   <span className="rounded bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
-                    -2 Coins
+                    -{ECONOMY.taskEditCost || 2} Coins
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  A warning modal will prompt you to confirm. Prevents rewriting difficult goals into trivial tasks right before the deadline.
+                  Requires two-step modal confirmation. Prevents changing your difficult workout or study goal into something trivial right before cutoff.
                 </p>
               </div>
 
@@ -312,18 +308,18 @@ export default function GuidePage() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-ink text-sm">Deleting Parent Tasks</h3>
                   <span className="rounded bg-rose-500/15 px-2 py-0.5 text-[10px] font-semibold text-rose-300">
-                    -5 Coins
+                    -{ECONOMY.taskDeleteCost || 5} Coins
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  Requires two-step modal confirmation. Prevents deleting tasks to evade cutoff accountability.
+                  Requires two-step modal confirmation. Prevents deleting tasks at 5:59 AM to evade the 45-coin missed task fine.
                 </p>
               </div>
             </div>
           </section>
         )}
 
-        {/* SECTION 5: HEARTS */}
+        {/* SECTION 5: HEARTS & BKASH */}
         {(activeTab === "hearts" || activeTab === "all") && (
           <section className="neu rounded-[28px] p-6 sm:p-8 space-y-6">
             <div className="flex items-center gap-3">
@@ -332,10 +328,10 @@ export default function GuidePage() {
               </span>
               <div>
                 <h2 className="font-display text-2xl font-normal text-ink">
-                  Heart Vault & Permanent Wealth
+                  Heart Vault & bKash Top-Up
                 </h2>
                 <p className="text-xs text-muted">
-                  Immune to anti-hoarding decay and acting as emergency insurance.
+                  Permanent wealth storage and emergency solvency.
                 </p>
               </div>
             </div>
@@ -343,9 +339,9 @@ export default function GuidePage() {
             <div className="neu-inset-soft rounded-2xl p-6 border border-rose-500/20 bg-rose-500/[0.02] space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
                 <div>
-                  <h3 className="text-base font-semibold text-ink">1 Heart = 80 Coins</h3>
+                  <h3 className="text-base font-semibold text-ink">1 Heart = {ECONOMY.heartCost || 75} Coins</h3>
                   <p className="text-xs text-muted mt-0.5">
-                    Maximum Vault Capacity: 3 Hearts
+                    Hold up to 3 Hearts in your vault · Immune to weekly decay
                   </p>
                 </div>
                 <Link
@@ -353,21 +349,21 @@ export default function GuidePage() {
                   className="neu-accent inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-[#17130c] shrink-0"
                 >
                   <Heart className="size-3.5 fill-current" />
-                  <span>Acquire at Store</span>
+                  <span>Visit Store Vault</span>
                 </Link>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 text-xs text-muted leading-relaxed">
-                <div className="space-y-1">
-                  <p className="font-semibold text-ink">Immune to Weekend Decay</p>
-                  <p>
-                    Every weekend, earned coins are subject to the anti-hoarding spin (5% - 20%). Hearts are 100% exempt from this decay, making them the safest asset in PIZ-Todo.
+                <div>
+                  <p className="font-semibold text-ink">The Anti-Hoarding Weekend Wheel</p>
+                  <p className="mt-1">
+                    Every weekend, users spin a wheel for a 5% to 20% decay on <strong>earned coins</strong>. Storing coins in Hearts protects your wealth from this decay forever!
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <p className="font-semibold text-ink">Waives 1 Missed Fine</p>
-                  <p>
-                    Instead of losing 50 liquid coins when life gets in the way, redeem 1 Heart to instantly erase the fine and preserve your streak solvency.
+                <div>
+                  <p className="font-semibold text-ink">Official bKash Top-Up ({BKASH_CONFIG.number})</p>
+                  <p className="mt-1">
+                    Purchasing coin packs with real money via bKash gives you coins that are <strong>100% exempt from weekly decay</strong>. Spends earned coins first, keeping paid coins as a safe cushion.
                   </p>
                 </div>
               </div>
@@ -375,12 +371,51 @@ export default function GuidePage() {
           </section>
         )}
 
-        {/* SECTION 6: PHOENIX */}
-        {(activeTab === "phoenix" || activeTab === "all") && (
+        {/* SECTION 6: 3-DAY STORAGE PURGE */}
+        {(activeTab === "storage" || activeTab === "all") && (
           <section className="neu rounded-[28px] p-6 sm:p-8 space-y-6">
             <div className="flex items-center gap-3">
               <span className="neu-inset-soft grid size-10 place-items-center rounded-2xl text-accent">
                 <Sparkles className="size-5" />
+              </span>
+              <div>
+                <h2 className="font-display text-2xl font-normal text-ink">
+                  3-Day Storage Auto-Purge & Permanent Stats
+                </h2>
+                <p className="text-xs text-muted">
+                  How we keep database storage lean without losing a single piece of your progress.
+                </p>
+              </div>
+            </div>
+
+            <div className="neu-soft rounded-2xl p-5 border border-white/[0.04] space-y-3 text-xs sm:text-sm text-muted leading-relaxed">
+              <p>
+                To run smoothly on a free cloud database, PIZ-Todo automatically deletes completed task objects from the database after <strong>3 days</strong>.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-3 pt-2">
+                <div className="neu-inset-soft rounded-xl p-3.5">
+                  <p className="font-semibold text-ink text-xs">Pre-Aggregated Stats</p>
+                  <p className="mt-1 text-[11px]">When you finish a task, your lifetime counter, streak, and monthly heatmap date are permanently stored in your user record.</p>
+                </div>
+                <div className="neu-inset-soft rounded-xl p-3.5">
+                  <p className="font-semibold text-ink text-xs">3-Day View Window</p>
+                  <p className="mt-1 text-[11px]">Recent finished tasks remain visible in your Todo list for 3 days so you can celebrate recent wins.</p>
+                </div>
+                <div className="neu-inset-soft rounded-xl p-3.5">
+                  <p className="font-semibold text-ink text-xs">Zero Dashboard Loss</p>
+                  <p className="mt-1 text-[11px]">When the old tasks are purged from DB storage, your streak, badges, and heatmap remain 100% untouched forever!</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* SECTION 7: PHOENIX PROTOCOL */}
+        {(activeTab === "phoenix" || activeTab === "all") && (
+          <section className="neu rounded-[28px] p-6 sm:p-8 space-y-6">
+            <div className="flex items-center gap-3">
+              <span className="neu-inset-soft grid size-10 place-items-center rounded-2xl text-accent">
+                <Flame className="size-5 text-accent" />
               </span>
               <div>
                 <h2 className="font-display text-2xl font-normal text-ink">
@@ -395,33 +430,33 @@ export default function GuidePage() {
             <div className="neu-soft rounded-2xl p-6 border border-accent/20 space-y-4">
               <h3 className="text-sm font-semibold text-ink">Protocol Activation Conditions</h3>
               <p className="text-xs text-muted leading-relaxed">
-                If you have accumulated 3 or more unpaid fines and have not used the protocol in the past 30 days, you can trigger a Fresh Start from your Profile.
+                If you accumulated 3 or more unpaid fines and haven’t used the protocol in the past 30 days, trigger a Fresh Start from your Profile.
               </p>
 
               <div className="grid gap-3 sm:grid-cols-3 pt-2">
                 <div className="neu-inset-soft rounded-xl p-3.5">
                   <p className="text-[10px] uppercase tracking-wider text-accent font-semibold">Step 1</p>
-                  <p className="mt-1 text-xs font-semibold text-ink">All Fines Waived</p>
-                  <p className="mt-0.5 text-[11px] text-faint">Outstanding debt cleared.</p>
+                  <p className="mt-1 text-xs font-semibold text-ink">Debt Cleared</p>
+                  <p className="mt-0.5 text-[11px] text-faint">All backlogged fines are fully waived.</p>
                 </div>
 
                 <div className="neu-inset-soft rounded-xl p-3.5">
                   <p className="text-[10px] uppercase tracking-wider text-accent font-semibold">Step 2</p>
-                  <p className="mt-1 text-xs font-semibold text-ink">+25 Starter Coins</p>
-                  <p className="mt-0.5 text-[11px] text-faint">Balance set to 25 coins.</p>
+                  <p className="mt-1 text-xs font-semibold text-ink">+{ECONOMY.phoenixStarterCoins || 20} Starter Coins</p>
+                  <p className="mt-0.5 text-[11px] text-faint">Immediate liquid balance to restart.</p>
                 </div>
 
                 <div className="neu-inset-soft rounded-xl p-3.5">
                   <p className="text-[10px] uppercase tracking-wider text-accent font-semibold">Step 3</p>
                   <p className="mt-1 text-xs font-semibold text-ink">3-Day Probation</p>
-                  <p className="mt-0.5 text-[11px] text-faint">Re-establish momentum.</p>
+                  <p className="mt-0.5 text-[11px] text-faint">Re-establish your daily momentum safely.</p>
                 </div>
               </div>
             </div>
           </section>
         )}
 
-        {/* SECTION 7: FAQ */}
+        {/* SECTION 8: FAQ */}
         {(activeTab === "faq" || activeTab === "all") && (
           <section className="neu rounded-[28px] p-6 sm:p-8 space-y-6">
             <div className="flex items-center gap-3">

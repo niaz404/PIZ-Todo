@@ -49,7 +49,23 @@ export async function GET(request) {
       });
     }
 
-    // Retrieve real tasks for this user
+    // 1. Auto-purge finished tasks older than 3 days to preserve database storage
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const threeDaysAgoKey = getDateKey(threeDaysAgo);
+
+    await db.collection("tasks").deleteMany({
+      $or: [
+        { userId: idStr },
+        ...(ObjectId.isValid(idStr) ? [{ userId: new ObjectId(idStr) }] : []),
+      ],
+      done: true,
+      $or: [
+        { completedAt: { $lt: threeDaysAgo.toISOString() } },
+        { date: { $lt: threeDaysAgoKey } },
+      ],
+    });
+
+    // 2. Retrieve active tasks and recent finished tasks (within 3 days)
     const tasks = await db
       .collection("tasks")
       .find({
@@ -61,7 +77,7 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    // Calculate current month streak from real completed tasks in db
+    // 3. Compute streak from pre-aggregated persistent completed dates
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
@@ -71,8 +87,9 @@ export async function GET(request) {
     const todayKey = `${yStr}-${mStr}-${String(todayNum).padStart(2, "0")}`;
 
     const datesWithCompletedTasks = new Set(
-      tasks.filter((t) => t.done && t.date).map((t) => t.date),
+      Array.isArray(userDoc?.completedDates) ? userDoc.completedDates : []
     );
+    tasks.filter((t) => t.done && t.date).forEach((t) => datesWithCompletedTasks.add(t.date));
 
     let monthlyStreak = 0;
     let checkDay = datesWithCompletedTasks.has(todayKey) ? todayNum : todayNum - 1;
@@ -151,6 +168,9 @@ export async function GET(request) {
         probationUntil: userDoc?.probationUntil || null,
         streak: monthlyStreak,
         bestStreak: Math.max(userDoc?.bestStreak ?? 0, monthlyStreak),
+        lifetimeCompleted: userDoc?.lifetimeCompleted ?? tasks.filter((t) => t.done).length,
+        completedDates: Array.from(datesWithCompletedTasks),
+        historyByDate: userDoc?.historyByDate || {},
         unpaidFines: unpaidFinesList.length,
         finishedMode: userDoc?.finishedMode ?? "section",
         dueTime: userDoc?.dueTime || "6:00 AM",

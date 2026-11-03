@@ -121,13 +121,71 @@ export async function PATCH(request) {
       const remainingCap = Math.max(0, ECONOMY.dailyMaxTaskCoins - alreadyEarnedToday);
       const actualReward = Math.min(ECONOMY.defaultTaskReward, remainingCap);
 
-      coinsEarnedChange = actualReward;
+      // Fetch current user document to get existing completedDates & streak
+      const userDoc = await db.collection("user").findOne(userObjFilter);
+      const prevCompletedDates = new Set(Array.isArray(userDoc?.completedDates) ? userDoc.completedDates : []);
+      prevCompletedDates.add(todayKey);
+
+      // Compute updated consecutive streak
+      let checkDate = new Date();
+      let currentStreak = 0;
+      const todayStr = getDateKey(checkDate);
+      if (prevCompletedDates.has(todayStr)) {
+        currentStreak += 1;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+      while (prevCompletedDates.has(getDateKey(checkDate))) {
+        currentStreak += 1;
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+
+      const bestStreak = Math.max(userDoc?.bestStreak ?? 0, currentStreak);
+
+      // Check 3-Day Consecutive Streak Milestone Bonus (+30 coins)
+      let streakBonusGiven = false;
+      if (currentStreak >= 3 && currentStreak % 3 === 0) {
+        const existingStreakTx = await db.collection("transactions").findOne({
+          userId: userIdStr,
+          type: "streak-bonus",
+          date: todayKey,
+        });
+        if (!existingStreakTx) {
+          streakBonusGiven = true;
+          await db.collection("transactions").insertOne({
+            userId: userIdStr,
+            type: "streak-bonus",
+            amount: ECONOMY.streakRewardBonus || 30,
+            label: `Streak Milestone Reward (${currentStreak} Days Consecutive!)`,
+            date: todayKey,
+            createdAt: now,
+          });
+        }
+      }
+
+      const totalEarnedInc = actualReward + (streakBonusGiven ? (ECONOMY.streakRewardBonus || 30) : 0);
+
+      // Update user document in MongoDB with pre-aggregated stats
+      await db.collection("user").updateOne(userObjFilter, {
+        $inc: {
+          earnedCoins: totalEarnedInc,
+          coins: totalEarnedInc,
+          lifetimeCompleted: 1,
+          [`historyByDate.${todayKey}.completed`]: 1,
+          [`historyByDate.${todayKey}.earned`]: actualReward,
+        },
+        $set: {
+          streak: currentStreak,
+          bestStreak,
+          updatedAt: now,
+        },
+        $addToSet: {
+          completedDates: todayKey,
+        },
+      });
 
       if (actualReward > 0) {
-        await db.collection("user").updateOne(userObjFilter, {
-          $inc: { earnedCoins: actualReward, coins: actualReward },
-          $set: { updatedAt: now },
-        });
         await db.collection("transactions").insertOne({
           userId: userIdStr,
           type: "task-reward",
@@ -141,7 +199,13 @@ export async function PATCH(request) {
       // Reopened task: reverse reward
       const revokeAmount = ECONOMY.defaultTaskReward;
       await db.collection("user").updateOne(userObjFilter, {
-        $inc: { earnedCoins: -revokeAmount, coins: -revokeAmount },
+        $inc: {
+          earnedCoins: -revokeAmount,
+          coins: -revokeAmount,
+          lifetimeCompleted: -1,
+          [`historyByDate.${todayKey}.completed`]: -1,
+          [`historyByDate.${todayKey}.earned`]: -revokeAmount,
+        },
         $set: { updatedAt: now },
       });
       await db.collection("transactions").insertOne({

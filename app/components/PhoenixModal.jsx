@@ -58,7 +58,7 @@ export default function PhoenixModal({ open, onClose }) {
             </p>
             <ul className="space-y-1.5 pl-4 list-disc text-[11.5px]">
               <li>Clears all {unpaidFineCount} backlogged unpaid fines to 0 debt.</li>
-              <li>Grants <strong>+25 Starter Coins</strong> so you can participate immediately.</li>
+              <li>Grants <strong>+{ECONOMY.phoenixStarterCoins || 20} Starter Coins</strong> so you can participate immediately.</li>
               <li>Resets streak cleanly to Day 0.</li>
               <li>Grants a <strong>3-Day Probation Shield</strong> with half-fines while you regain rhythm.</li>
             </ul>
@@ -81,7 +81,7 @@ export default function PhoenixModal({ open, onClose }) {
               className="neu-accent inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-semibold rounded-xl transition-all shadow-md"
             >
               <Sparkles className="size-3.5" />
-              <span>Activate Fresh Start (+25 Coins)</span>
+              <span>Activate Fresh Start (+{ECONOMY.phoenixStarterCoins || 20} Coins)</span>
             </button>
           </div>
         </div>

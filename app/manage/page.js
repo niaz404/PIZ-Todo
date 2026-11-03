@@ -673,3 +673,4 @@ export default function ManagePortalPage() {
     </div>
   );
 }
+

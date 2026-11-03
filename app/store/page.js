@@ -122,7 +122,7 @@ export default function StorePage() {
                       } outstanding`}
                 </h2>
                 <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-muted">
-                  {formatCoins(totalOutstanding)} coins needed to fully clear fines (50 coins per missed task).
+                  {formatCoins(totalOutstanding)} coins needed to fully clear fines ({ECONOMY.finePerMissedTask || 45} coins per missed task).
                   {(hearts ?? 0) > 0 ? ` You hold ${hearts} Heart${hearts === 1 ? "" : "s"} ready to waive fines!` : ""}
                 </p>
               </div>
@@ -198,7 +198,7 @@ export default function StorePage() {
                   Heart Protection
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-muted">
-                  Stores wealth permanently immune to weekly decay. Consuming 1 Heart waives 1 missed task fine (worth 50 coins) and maintains your streak solvency.
+                  Stores wealth permanently immune to weekly decay. Consuming 1 Heart waives 1 missed task fine (worth {ECONOMY.finePerMissedTask || 45} coins) and maintains your streak solvency.
                 </p>
               </div>
             </div>
@@ -207,16 +207,16 @@ export default function StorePage() {
               <div>
                 <p className="text-[9px] uppercase tracking-[0.14em] text-faint">Price</p>
                 <p className="mt-0.5 text-lg font-bold tabular-nums text-ink">
-                  {ECONOMY.heartCost || 80} <span className="text-xs font-normal text-muted">Coins</span>
+                  {ECONOMY.heartCost || 75} <span className="text-xs font-normal text-muted">Coins</span>
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={buyHeart}
-                disabled={coins < (ECONOMY.heartCost || 80) || (hearts ?? 0) >= (ECONOMY.maxHearts || 3)}
+                disabled={coins < (ECONOMY.heartCost || 75) || (hearts ?? 0) >= (ECONOMY.maxHearts || 3)}
                 className={`neu-accent inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
-                  coins < (ECONOMY.heartCost || 80) || (hearts ?? 0) >= (ECONOMY.maxHearts || 3)
+                  coins < (ECONOMY.heartCost || 75) || (hearts ?? 0) >= (ECONOMY.maxHearts || 3)
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:scale-[1.02]"
                 }`}
@@ -225,7 +225,7 @@ export default function StorePage() {
                 <span>
                   {(hearts ?? 0) >= (ECONOMY.maxHearts || 3)
                     ? "Max Capacity (3/3)"
-                    : `Buy Heart (${ECONOMY.heartCost || 80}c)`}
+                    : `Buy Heart (${ECONOMY.heartCost || 75}c)`}
                 </span>
               </button>
             </div>

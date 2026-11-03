@@ -177,7 +177,7 @@ export default function TodoPage() {
               title="Daily reward cap for completed tasks"
             >
               <Coins className="size-3.5 text-accent" />
-              <span>{todayTaskCoinsEarned ?? 0} / {ECONOMY.dailyMaxTaskCoins || 150}</span>
+              <span>{todayTaskCoinsEarned ?? 0} / {ECONOMY.dailyMaxTaskCoins || 60}</span>
               <span className="text-[9px] text-faint">today</span>
             </div>
             <button

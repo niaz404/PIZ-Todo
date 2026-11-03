@@ -1,26 +1,7 @@
 import { ECONOMY } from "../lib/economy";
 import { getDateKey } from "../lib/utils";
 
-export const mockUser = {
-  name: "New Member",
-  firstName: "Member",
-  email: "user@piz-todo.app",
-  handle: "@member",
-  initials: "PIZ",
-  role: "Free member",
-  memberSince: "October 2026",
-  level: 1,
-  xp: 0,
-  xpGoal: 100,
-  coins: 0,
-  weeklyEarned: 0,
-  lifetimeCoins: 0,
-  rank: 1,
-  streak: 0,
-  bestStreak: 0,
-};
-
-export const mockNavItems = [
+export const DEFAULT_NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
   { href: "/tasks", label: "Todo", icon: "tasks" },
   { href: "/community", label: "Community", icon: "community" },
@@ -28,6 +9,8 @@ export const mockNavItems = [
   { href: "/guide", label: "Guide", icon: "guide" },
   { href: "/profile", label: "Profile", icon: "profile" },
 ];
+
+export const mockNavItems = DEFAULT_NAV_ITEMS;
 
 export function createInitialDays() {
   const todayKey = getDateKey();
@@ -42,7 +25,7 @@ export function createInitialDays() {
   ];
 }
 
-export const mockPreferences = [
+export const DEFAULT_PREFERENCES = [
   {
     id: "digest",
     title: "Weekly digest",
@@ -62,3 +45,5 @@ export const mockPreferences = [
     enabled: false,
   },
 ];
+
+export const mockPreferences = DEFAULT_PREFERENCES;

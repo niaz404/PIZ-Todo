@@ -20,6 +20,7 @@ import {
   X,
 } from "../components/icons";
 import { useWorkspace } from "../components/Providers";
+import { ECONOMY } from "../lib/economy";
 import {
   canChangeDueTime,
   formatCoins,
@@ -493,7 +494,7 @@ export default function ProfilePage() {
             </p>
             <p className="mt-1 flex items-center gap-1.5 text-xl font-bold tabular-nums text-ink">
               <Check className="size-4 text-accent" />
-              {completedTasks.length}
+              {profileData?.lifetimeCompleted ?? completedTasks.length}
             </p>
             <p className="mt-0.5 text-[10px] text-faint">Lifetime finished</p>
           </div>
@@ -609,7 +610,7 @@ export default function ProfilePage() {
               </div>
               <h4 className="mt-3 text-sm font-semibold text-ink">Auto-Pay Fines</h4>
               <p className="mt-1 text-xs text-muted leading-relaxed">
-                When enabled, overdue task fines (50 coins) are automatically settled at daily cutoff if your balance permits, preventing persistent alerts. Default is manual.
+                When enabled, overdue task fines ({ECONOMY.finePerMissedTask || 45} coins) are automatically settled at daily cutoff if your balance permits, preventing persistent alerts. Default is manual.
               </p>
             </div>
             <p className="text-[10px] text-faint">
@@ -630,7 +631,7 @@ export default function ProfilePage() {
               </div>
               <h4 className="mt-3 text-sm font-semibold text-ink">Heart Wealth Storage</h4>
               <p className="mt-1 text-xs text-muted leading-relaxed">
-                Hearts are permanent wealth immune to weekly weekend decay. Each Heart waives 1 missed task fine (worth 50 coins). Acquire up to 3 at the Store.
+                Hearts are permanent wealth immune to weekly weekend decay. Each Heart waives 1 missed task fine (worth {ECONOMY.finePerMissedTask || 45} coins). Acquire up to 3 at the Store.
               </p>
             </div>
             <Link

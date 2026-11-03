@@ -14,7 +14,7 @@ import LoginView from "./LoginView";
 import DueTimeModal from "./DueTimeModal";
 import PhoenixModal from "./PhoenixModal";
 import { useSession } from "@/lib/auth-client";
-import { createInitialDays, mockUser } from "../data/mockData";
+import { createInitialDays } from "../data/mockData";
 import {
   ECONOMY,
   buildDailyHistory,
@@ -195,6 +195,8 @@ export default function Providers({ children }) {
   const [streak, setStreak] = useState(0);
   const [userRole, setUserRole] = useState("member");
   const [paymentRequests, setPaymentRequests] = useState([]);
+  const [historyByDate, setHistoryByDate] = useState({});
+  const [completedDates, setCompletedDates] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [dueTime, setDueTime] = useState("6:00 AM");
   const [dueHour, setDueHour] = useState(6);
@@ -307,6 +309,8 @@ export default function Providers({ children }) {
         if (data.user.lastPhoenixAt) setLastPhoenixAt(data.user.lastPhoenixAt);
         if (data.user.probationUntil) setProbationUntil(data.user.probationUntil);
         if (data.user.role) setUserRole(String(data.user.role).toLowerCase());
+        if (data.user.historyByDate) setHistoryByDate(data.user.historyByDate);
+        if (Array.isArray(data.user.completedDates)) setCompletedDates(data.user.completedDates);
         if (Array.isArray(data.paymentRequests)) setPaymentRequests(data.paymentRequests);
         if (data.user.dueTime) setDueTime(data.user.dueTime);
         if (typeof data.user.dueHour === "number") setDueHour(data.user.dueHour);
@@ -496,16 +500,16 @@ export default function Providers({ children }) {
   const todayFlow = dailyHistory[dailyHistory.length - 1];
 
   const monthHistory = useMemo(
-    () => buildMonthHistory({ days, fines, transactions, todayKey }),
-    [days, fines, transactions, todayKey],
+    () => buildMonthHistory({ days, fines, transactions, todayKey, historyByDate, completedDates }),
+    [days, fines, transactions, todayKey, historyByDate, completedDates],
   );
   const monthTotals = useMemo(
     () => summarizeHistory(monthHistory),
     [monthHistory],
   );
   const monthlyStreak = useMemo(
-    () => calculateMonthlyStreak(days, todayKey),
-    [days, todayKey],
+    () => calculateMonthlyStreak(days, todayKey, completedDates),
+    [days, todayKey, completedDates],
   );
 
   const completedTasks = useMemo(
@@ -1354,7 +1358,7 @@ export default function Providers({ children }) {
     setFinishedMode("section");
     setHistoryMode("balanced");
     setSocialFocus("mixed");
-    setStreak(mockUser.streak);
+    setStreak(0);
     notify(
       "Demo reset",
       "Seed tasks, a clean ledger, and a balanced economy.",
