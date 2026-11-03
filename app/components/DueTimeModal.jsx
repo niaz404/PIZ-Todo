@@ -7,12 +7,12 @@ import { DUE_TIME_OPTIONS, canChangeDueTime, getNextDueTimeUnlockDate } from "..
 
 export default function DueTimeModal({ open, onClose }) {
   const { dueTime, dueHour, dueTimeChangedAt, updateDueTime } = useWorkspace();
-  const [selectedHour, setSelectedHour] = useState(dueHour ?? 0);
+  const [selectedHour, setSelectedHour] = useState(dueHour ?? 6);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setSelectedHour(dueHour ?? 0);
+      setSelectedHour(dueHour ?? 6);
     }
   }, [open, dueHour]);
 

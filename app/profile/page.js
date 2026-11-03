@@ -525,7 +525,7 @@ export default function ProfilePage() {
               </div>
               <p className="mt-1 text-xs text-muted max-w-xl leading-relaxed">
                 Your current daily tasks become due at{" "}
-                <span className="font-semibold text-accent">{dueTime || "12:00 AM"}</span>,
+                <span className="font-semibold text-accent">{dueTime || "6:00 AM"}</span>,
                 at which point the daily cycle ends and the new day begins.
               </p>
             </div>

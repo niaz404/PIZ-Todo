@@ -193,8 +193,8 @@ export default function Providers({ children }) {
   const [historyMode, setHistoryMode] = useState("balanced");
   const [socialFocus, setSocialFocus] = useState("mixed");
   const [streak, setStreak] = useState(0);
-  const [dueTime, setDueTime] = useState("12:00 AM");
-  const [dueHour, setDueHour] = useState(0);
+  const [dueTime, setDueTime] = useState("6:00 AM");
+  const [dueHour, setDueHour] = useState(6);
   const [dueTimeChangedAt, setDueTimeChangedAt] = useState(null);
   const [isDueModalOpen, setIsDueModalOpen] = useState(false);
   const [toast, setToast] = useState(null);
@@ -317,7 +317,7 @@ export default function Providers({ children }) {
         }
 
         // Trigger overdue tasks settlement check at cutoff
-        const userCutoffHour = typeof data.user.dueHour === "number" ? data.user.dueHour : 0;
+        const userCutoffHour = typeof data.user.dueHour === "number" ? data.user.dueHour : 6;
         const currentTodayKey = getEffectiveDateKey(new Date(), userCutoffHour);
         fetch("/api/workspace", {
           method: "POST",
@@ -325,7 +325,7 @@ export default function Providers({ children }) {
           body: JSON.stringify({ action: "settle-missed-tasks", payload: { todayKey: currentTodayKey } }),
         }).catch(() => {});
         if (Array.isArray(data.tasks)) {
-          const userCutoffHour = typeof data.user.dueHour === "number" ? data.user.dueHour : 0;
+          const userCutoffHour = typeof data.user.dueHour === "number" ? data.user.dueHour : 6;
           const todayKey = getEffectiveDateKey(new Date(), userCutoffHour);
           const map = new Map();
           map.set(todayKey, {

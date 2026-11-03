@@ -13,12 +13,15 @@ export function getDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
-export function getEffectiveDateKey(date, cutoffHour = 0) {
+export const DEFAULT_DUE_HOUR = 6;
+export const DEFAULT_DUE_TIME = "6:00 AM";
+
+export function getEffectiveDateKey(date, cutoffHour = 6) {
   const target = date ? new Date(date) : null;
   if (!target || isNaN(target.getTime())) {
     return "2026-11-01";
   }
-  const adjusted = new Date(target.getTime() - (Number(cutoffHour) || 0) * 60 * 60 * 1000);
+  const adjusted = new Date(target.getTime() - (Number(cutoffHour) ?? 6) * 60 * 60 * 1000);
   const year = adjusted.getFullYear();
   const month = String(adjusted.getMonth() + 1).padStart(2, "0");
   const day = String(adjusted.getDate()).padStart(2, "0");
@@ -26,9 +29,9 @@ export function getEffectiveDateKey(date, cutoffHour = 0) {
 }
 
 export const DUE_TIME_OPTIONS = [
-  { label: "12:00 AM", sub: "Midnight", value: "12:00 AM", hour: 0, tag: "Default" },
+  { label: "6:00 AM", sub: "Early Riser / Dawn", value: "6:00 AM", hour: 6, tag: "Default" },
+  { label: "12:00 AM", sub: "Midnight", value: "12:00 AM", hour: 0 },
   { label: "3:00 AM", sub: "Night Owl", value: "3:00 AM", hour: 3, tag: "Popular" },
-  { label: "6:00 AM", sub: "Early Riser", value: "6:00 AM", hour: 6 },
   { label: "9:00 AM", sub: "Morning", value: "9:00 AM", hour: 9 },
   { label: "12:00 PM", sub: "Noon", value: "12:00 PM", hour: 12 },
   { label: "3:00 PM", sub: "Afternoon", value: "3:00 PM", hour: 15 },

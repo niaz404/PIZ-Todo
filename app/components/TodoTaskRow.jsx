@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import {
   Check,
   ChevronDown,
@@ -38,13 +38,6 @@ export default function TodoTaskRow({
     ? ECONOMY.deleteDoneTaskCost
     : ECONOMY.deleteOpenTaskCost;
 
-  useEffect(() => {
-    if (!confirmingDelete) return;
-
-    const timer = setTimeout(() => setConfirmingDelete(false), 5000);
-    return () => clearTimeout(timer);
-  }, [confirmingDelete]);
-
   const startEditing = () => {
     setTitleDraft(task.title);
     setEditing(true);
@@ -78,15 +71,6 @@ export default function TodoTaskRow({
       event.preventDefault();
       cancelEditing();
     }
-  };
-
-  const handleDelete = () => {
-    if (confirmingDelete) {
-      const deleted = onDelete?.(task.id);
-      if (!deleted) setConfirmingDelete(false);
-      return;
-    }
-    setConfirmingDelete(true);
   };
 
   return (

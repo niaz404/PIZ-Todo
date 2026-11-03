@@ -164,7 +164,7 @@ export default function TodoPage() {
             </span>
             <div className="min-w-0">
               <p className="text-xs text-ink font-medium">
-                Work tasks will be due at <span className="text-accent font-semibold">{dueTime || "12:00 AM"}</span>.
+                Work tasks will be due at <span className="text-accent font-semibold">{dueTime || "6:00 AM"}</span>.
               </p>
               <p className="text-[10px] text-faint mt-0.5">
                 Day cycle rolls over at cutoff · Can be changed once per month
